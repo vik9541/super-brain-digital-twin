@@ -33,12 +33,12 @@ spec:
         - name: SUPABASE_URL
           valueFrom:
             secretKeyRef:
-              name: supabase-creds
+              name: digital-twin-secrets
               key: url
         - name: SUPABASE_KEY
           valueFrom:
             secretKeyRef:
-              name: supabase-creds
+              name: digital-twin-secrets
               key: key
         - name: PORT
           value: "8000"
