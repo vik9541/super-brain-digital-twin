@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-recording-rules
+  namespace: monitoring
+data:
+  recording-rules.yaml: |
+    groups:
+    - name: digital-twin
+      interval: 1m
+      rules:
+      # API производительность
+      - record: api:request_duration:p99
+        expr: histogram_quantile(0.99, rate(api_request_duration_seconds_bucket[5m]))
+      
+      - record: api:request_duration:p95
+        expr: histogram_quantile(0.95, rate(api_request_duration_seconds_bucket[5m]))
+      
+      - record: api:error_rate
+        expr: rate(api_requests_total{status=~"5.."}[5m])
+      
+      # Bot метрики
+      - record: bot:message_latency:avg
+        expr: rate(bot_message_processing_seconds_sum[5m]) / rate(bot_message_processing_seconds_count[5m])
+      
+      - record: bot:messages_per_minute
+        expr: rate(bot_messages_total[1m])
+      
+      # Batch анализатор
+      - record: batch:processing_duration:avg
+        expr: rate(batch_processing_duration_seconds_sum[5m]) / rate(batch_processing_duration_seconds_count[5m])
+      
+      - record: batch:error_rate
+        expr: rate(batch_errors_total[5m])
+      
+      # K8s ноды
+      - record: node:cpu_usage
+        expr: (1 - avg without (mode) (rate(node_cpu_seconds_total{mode="idle"}[5m]))) * 100
+      
+      - record: node:memory_usage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
