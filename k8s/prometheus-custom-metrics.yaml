@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-additional-scrape-configs
+  namespace: monitoring
+data:
+  additional-scrape-configs.yaml: |
+    # API метрики
+    - job_name: 'digital-twin-api'
+      static_configs:
+      - targets: ['digital-twin-api:8000']
+      metrics_path: '/metrics'
+      scrape_interval: 15s
+    
+    # Bot метрики
+    - job_name: 'telegram-bot'
+      static_configs:
+      - targets: ['telegram-bot:8080']
+      metrics_path: '/metrics'
+      scrape_interval: 30s
+    
+    # Batch Analyzer метрики (Прометей под кронжоб вывод)
+    - job_name: 'batch-analyzer'
+      static_configs:
+      - targets: ['batch-analyzer-metrics:9090']
+      scrape_interval: 5m
