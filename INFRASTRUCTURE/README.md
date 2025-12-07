@@ -3,7 +3,7 @@
 
 **Location:** NYC2 (Primary), Frankfurt (Registry & Staging)  
 **Status:** 🟢 ACTIVE & MONITORED  
-**Last Updated:** December 7, 2025, 19:12 MSK
+**Last Updated:** December 7, 2025, 19:20 MSK
 
 ---
 
@@ -50,13 +50,20 @@
 
 ### 3️⃣ Cost & Billing
 
-- **[DIGITALOCEAN-BILLING.md](./DIGITALOCEAN-BILLING.md)** 📅 **NEW**
+- **[DIGITALOCEAN-BILLING.md](./DIGITALOCEAN-BILLING.md)** 📅 **CURRENT**
   - Monthly billing breakdown
   - Infrastructure costs
   - Service components
   - Cost optimization strategies
   - Payment schedule
   - **Status:** ✅ **CURRENT** (Dec 2025: $8.61/month)
+
+- **[GITHUB-BILLING.md](./GITHUB-BILLING.md)** 📅 **NEW**
+  - GitHub Actions usage
+  - Free tier benefits
+  - Repository-specific costs
+  - Payment status
+  - **Status:** ✅ **FREE** (No charges)
 
 - **[COST-ANALYSIS.md](./COST-ANALYSIS.md)**
   - Cost forecasting
@@ -158,14 +165,20 @@ DIGITALOCEAN INFRASTRUCTURE
 
 | Component | Cost |
 |:---|---:|
+| **DigitalOcean** | |
 | Kubernetes Cluster | $4.51 |
 | Droplets | $2.71 |
 | Container Registry | $0.40 |
-| **Subtotal** | **$7.62** |
+| **DigitalOcean Subtotal** | **$7.62** |
 | Tax (VAT 13%) | $0.99 |
-| **Monthly Total** | **$8.61** |
-
-**Yearly Estimate:** $103.32
+| **DigitalOcean Total** | **$8.61** |
+| | |
+| **GitHub** | |
+| Free Tier (Actions) | $0 |
+| **GitHub Total** | **$0** |
+| | |
+| **Combined Total** | **$8.61/month** |
+| **Annual Estimate** | **$103.32** |
 
 ---
 
@@ -195,5 +208,5 @@ DIGITALOCEAN INFRASTRUCTURE
 
 **Status:** 🟢 PRODUCTION READY  
 **Uptime:** 99.87%  
-**Last Update:** December 7, 2025, 19:12 MSK  
+**Last Update:** December 7, 2025, 19:20 MSK  
 **Next Review:** January 1, 2026
