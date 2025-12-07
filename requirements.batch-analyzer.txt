@@ -1,0 +1,33 @@
+# Python Requirements for Batch Analyzer
+# Super Brain Digital Twin - TASK-002
+
+# Core async support
+aiohttp>=3.9.1
+aiofiles>=23.2.1
+
+# Database
+supabase>=2.3.0
+postgresql-binary>=0.3.0
+
+# API integrations
+requests>=2.31.0
+httpx>=0.26.0
+
+# Telegram bot
+python-telegram-bot>=20.7
+
+# Data processing
+pandas>=2.1.4
+numpy>=1.26.2
+
+# Environment & Config
+python-dotenv>=1.0.0
+pydantic>=2.5.3
+
+# Logging & Monitoring
+python-json-logger>=2.0.7
+
+# Testing
+pytest>=7.4.3
+pytest-asyncio>=0.23.2
+pytest-cov>=4.1.0
