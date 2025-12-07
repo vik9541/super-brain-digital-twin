@@ -1,6 +1,6 @@
 # 🧠 SUPER BRAIN v4.0 — FLEXIBLE AI ECOSYSTEM
 
-**Дата:** 7 декабря 2025, 14:13 MSK  
+**Дата:** 7 декабря 2025, 17:55 MSK  
 **Статус:** ✅ FLEXIBLE ARCHITECTURE  
 **Версия:** 4.0  
 **Концепция:** Один Telegram интерфейс = Вся информация + Умные Агенты + Динамические Сценарии
@@ -75,6 +75,16 @@
         │  3-N. Custom Agents (Сценарии)  │
         │     └─ Создаются под задачи    │
         └──────────────────────────────────┘
+        
+        ┌────────────▼────────────────────────┐
+        │  🌐 REST API + WebSocket            │
+        │  (TASK-005)                        │
+        │                                    │
+        │  - GET /api/v1/analysis/{id}       │
+        │  - POST /api/v1/batch-process      │
+        │  - GET /api/v1/metrics             │
+        │  - WebSocket /api/v1/live-events   │
+        └────────────────────────────────────┘
 ```
 
 ---
@@ -429,6 +439,117 @@ connections {
 
 ---
 
+## 🌐 API ENDPOINTS (TASK-005)
+
+### 4 новых REST/WebSocket endpoints для расширения функциональности
+
+#### 1️⃣ **GET /api/v1/analysis/{id}**
+**Описание:** Получить результат анализа файла из Supabase  
+**GitHub Issue:** https://github.com/vik9541/super-brain-digital-twin/issues/1
+
+```bash
+GET /api/v1/analysis/{id}
+Authorization: Bearer {token}
+
+# Response
+{
+  "id": "uuid-12345",
+  "file_id": "uuid-67890",
+  "filename": "document.pdf",
+  "analysis_result": {
+    "type": "document",
+    "subtype": "invoice",
+    "tags": ["finance", "2025"],
+    "confidence": 95
+  },
+  "status": "completed"
+}
+```
+
+#### 2️⃣ **POST /api/v1/batch-process**
+**Описание:** Отправить несколько файлов на массовую обработку в Batch Analyzer CronJob  
+**GitHub Issue:** https://github.com/vik9541/super-brain-digital-twin/issues/2
+
+```bash
+POST /api/v1/batch-process
+Authorization: Bearer {token}
+
+{
+  "file_ids": ["uuid-file-1", "uuid-file-2", "uuid-file-3"],
+  "priority": "high",
+  "notify_on_completion": true
+}
+
+# Response (202 Accepted)
+{
+  "batch_id": "batch-uuid-12345",
+  "file_count": 3,
+  "status": "queued",
+  "progress_url": "/api/v1/batch-process/batch-uuid-12345"
+}
+```
+
+#### 3️⃣ **GET /api/v1/metrics**
+**Описание:** Получить системные метрики и KPI всех компонентов  
+**GitHub Issue:** https://github.com/vik9541/super-brain-digital-twin/issues/3
+
+```bash
+GET /api/v1/metrics?period=7d
+Authorization: Bearer {token}
+
+# Response
+{
+  "timestamp": "2025-12-07T14:30:00Z",
+  "system": {
+    "uptime_percent": 99.98,
+    "requests_total": 15234,
+    "error_rate_percent": 0.02
+  },
+  "ai_analysis": {
+    "files_analyzed": 2234,
+    "analysis_success_rate": 98.7,
+    "avg_confidence": 92.3
+  },
+  "database": {
+    "supabase_healthy": true,
+    "query_count": 45678
+  }
+}
+```
+
+#### 4️⃣ **WebSocket /api/v1/live-events**
+**Описание:** Real-time поток событий из агентов анализа и организации  
+**GitHub Issue:** https://github.com/vik9541/super-brain-digital-twin/issues/4
+
+```javascript
+// WebSocket connection
+const ws = new WebSocket(
+  'wss://97v.ru/api/v1/live-events',
+  ['Bearer {token}']
+);
+
+ws.addEventListener('message', (event) => {
+  const data = JSON.parse(event.data);
+  
+  // File analysis started
+  if (data.type === 'analysis_started') {
+    console.log('Analysis started for:', data.filename);
+  }
+  
+  // Analysis progress
+  if (data.type === 'analysis_progress') {
+    console.log('Progress:', data.progress_percent);
+  }
+  
+  // Analysis completed
+  if (data.type === 'analysis_completed') {
+    console.log('Analysis result:', data.analysis_result);
+  }
+});
+```
+
+---
+
 ## 🎬 СЦЕНАРИИ (Шаблоны для разных задач)
 
 **Сценарий** = контейнер для одной области жизни/проекта
@@ -671,21 +792,31 @@ sqlalchemy==2.0.23
 perplexity-python==1.0.0
 requests==2.31.0
 
+# Web Framework (for API endpoints)
+fastapi==0.104.1
+uvicorn==0.24.0
+python-multipart==0.0.6
+
+# WebSocket
+websockets==12.0
+
 # Utilities
 python-dotenv==1.0.0
 pydantic==2.5.0
+pydantic-settings==2.1.0
 redis==5.0.0
 
 # File Processing
 pytesseract==0.3.10
 pdf2image==1.16.3
 pillow==10.1.0
-pydub==0.25.1 (для голоса)
+pydub==0.25.1
 
 # Utils
 phonumbers==8.13.0
 pytz==2023.3
-hashlib (встроенная)
+jwt==1.3.0
+python-jose==3.3.0
 ```
 
 ---
@@ -705,11 +836,22 @@ SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 PERPLEXITY_API_KEY=pplx-xxxxxxxxxxxxxxxxxxxxx
 PERPLEXITY_MODEL=sonar-reasoning-pro
 
+# API
+API_HOST=0.0.0.0
+API_PORT=8000
+API_PREFIX=/api/v1
+JWT_SECRET_KEY=your-secret-key-here
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_HOURS=24
+
 # Storage (опционально)
 S3_BUCKET=super-brain-files
 S3_REGION=us-east-1
 S3_ACCESS_KEY=AKIA...
 S3_SECRET_KEY=xxxxx
+
+# Redis
+REDIS_URL=redis://localhost:6379/0
 
 # Environment
 ENVIRONMENT=production
@@ -735,27 +877,30 @@ DEBUG=false
 - [ ] Docker образ собран
 - [ ] GitHub Actions CI/CD настроен
 - [ ] K8s Deployment готов
+- [ ] TASK-005: GET /api/v1/analysis/{id} завершен
+- [ ] TASK-005: POST /api/v1/batch-process завершен
+- [ ] TASK-005: GET /api/v1/metrics завершен
+- [ ] TASK-005: WebSocket /api/v1/live-events завершен
 
 ---
 
 ## 🎬 TIMELINE (v4.0)
 
 ```
-WEEK 1 (Основа)
+WEEK 1 (Основа) ✅
 ├─ DAY 1-2: BOT.PY основной код
 ├─ DAY 3: Analyzer agent
 ├─ DAY 4: Organizer agent
 └─ DAY 5: Supabase интеграция
 
-WEEK 2 (Функциональность)
-├─ DAY 6: Scenario management
-├─ DAY 7: Query handlers
-├─ DAY 8: Redis caching
-└─ DAY 9: Testing
+WEEK 2 (Функциональность) 🟡
+├─ DAY 6-7: TASK-005-01 & 02 (GET analysis, POST batch)
+├─ DAY 8: TASK-005-03 & 04 (GET metrics, WebSocket)
+└─ DAY 9: Testing & Documentation
 
-WEEK 3 (Deployment)
-├─ DAY 10: Docker
-├─ DAY 11: K8s
+WEEK 3 (Deployment) ⚪
+├─ DAY 10: Security audit + Load testing
+├─ DAY 11: Performance optimization
 └─ DAY 12: Production Ready!
 
 ИТОГО: 3 недели до первой версии!
@@ -768,6 +913,7 @@ WEEK 3 (Deployment)
 ✅ **Легко добавлять категории** — просто создаешь в Telegram  
 ✅ **Легко создавать сценарии** — один команда `/new_scenario`  
 ✅ **Легко добавлять агентов** — когда нужны, расширяешь под свои задачи  
+✅ **Легко расширять API** — новые endpoints через FastAPI  
 ✅ **Легко интегрировать услуги** — N8N, SendGrid, Twilio подключаются потом  
 ✅ **Легко масштабировать** — K8s автоматически на нагрузку  
 ✅ **Легко экспортировать** — вся информация в Supabase  
@@ -779,6 +925,7 @@ WEEK 3 (Deployment)
 **Один Telegram интерфейс.**  
 **Вся твоя информация.**  
 **Умные агенты.**  
+**Полный REST API + WebSocket.**  
 **Бесконечные возможности.**
 
 ```
@@ -794,12 +941,18 @@ WEEK 3 (Deployment)
 ВСЁ анализируется.
 ВСЁ обучается.
 ВСЁ масштабируется.
+ВСЁ доступно через API.
 ```
 
 ---
 
-**Дата утверждения:** 7 декабря 2025, 14:13 MSK  
+**Дата утверждения:** 7 декабря 2025, 17:55 MSK  
 **Версия:** 4.0 FLEXIBLE  
 **Статус:** APPROVED ✅  
 **Автор:** Perplexity AI + vik9541  
-**Платформа:** Telegram + Supabase + Python
+**Платформа:** Telegram + Supabase + Python + FastAPI
+**GitHub Issues:** 
+- [TASK-005-01](https://github.com/vik9541/super-brain-digital-twin/issues/1)
+- [TASK-005-02](https://github.com/vik9541/super-brain-digital-twin/issues/2)
+- [TASK-005-03](https://github.com/vik9541/super-brain-digital-twin/issues/3)
+- [TASK-005-04](https://github.com/vik9541/super-brain-digital-twin/issues/4)
