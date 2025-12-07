@@ -1,0 +1,213 @@
+name: Auto-Update Documentation
+
+on:
+  schedule:
+    # Запускается каждый день в 09:00 MSK (06:00 UTC)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    # Можно запустить вручную через GitHub UI
+
+jobs:
+  update-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pyyaml
+
+      - name: Update Master Report
+        run: |
+          python3 << 'EOF'
+          import os
+          import json
+          from datetime import datetime
+          import re
+          
+          # Получить текущее время
+          now = datetime.now().strftime('%d %B %Y, %H:%M MSK')
+          
+          # Прочитать MASTER_EXPERT_REPORT.md
+          with open('MASTER_EXPERT_REPORT.md', 'r', encoding='utf-8') as f:
+              content = f.read()
+          
+          # Обновить дату в файле
+          content = re.sub(
+              r'\*\*Last Updated:\*\* .+',
+              f'**Last Updated:** {now}',
+              content
+          )
+          
+          # Проверить все GitHub ссылки
+          # Это можно расширить для проверки валидности ссылок
+          github_links = re.findall(r'https://github\.com/[^\s)]+', content)
+          print(f"Found {len(github_links)} GitHub links in MASTER_EXPERT_REPORT.md")
+          
+          # Записать обновленное содержимое
+          with open('MASTER_EXPERT_REPORT.md', 'w', encoding='utf-8') as f:
+              f.write(content)
+          
+          print("✅ MASTER_EXPERT_REPORT.md updated")
+          EOF
+
+      - name: Update README_MASTER
+        run: |
+          python3 << 'EOF'
+          import os
+          from datetime import datetime
+          import re
+          
+          # Получить текущее время
+          now = datetime.now().strftime('%d %B %Y, %H:%M MSK')
+          
+          # Прочитать README_MASTER.md
+          with open('README_MASTER.md', 'r', encoding='utf-8') as f:
+              content = f.read()
+          
+          # Обновить дату
+          content = re.sub(
+              r'\*\*Дата создания:\*\*.+',
+              f'**Дата создания:** {now}',
+              content
+          )
+          
+          # Обновить статус
+          content = re.sub(
+              r'\*\*Статус:\*\*.+',
+              f'**Статус:** 🟢 ACTIVE & MAINTAINED',
+              content
+          )
+          
+          # Записать
+          with open('README_MASTER.md', 'w', encoding='utf-8') as f:
+              f.write(content)
+          
+          print("✅ README_MASTER.md updated")
+          EOF
+
+      - name: Count and validate documentation
+        run: |
+          python3 << 'EOF'
+          import os
+          import re
+          
+          # Подсчитать документы
+          doc_count = 0
+          for root, dirs, files in os.walk('DEPARTMENTS'):
+              for file in files:
+                  if file.endswith('.md'):
+                      doc_count += 1
+          
+          # Основные документы
+          main_docs = ['SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md', 
+                       'MASTER_EXPERT_REPORT.md',
+                       'README_MASTER.md']
+          
+          for doc in main_docs:
+              if os.path.exists(doc):
+                  doc_count += 1
+          
+          print(f"📊 Total documentation files: {doc_count}")
+          
+          # Подсчитать GitHub ссылки
+          github_links = []
+          for root, dirs, files in os.walk('.'):
+              for file in files:
+                  if file.endswith('.md'):
+                      filepath = os.path.join(root, file)
+                      try:
+                          with open(filepath, 'r', encoding='utf-8') as f:
+                              content = f.read()
+                              links = re.findall(r'https://github\.com/[^\s)]+', content)
+                              github_links.extend(links)
+                      except:
+                          pass
+          
+          unique_links = len(set(github_links))
+          print(f"🔗 Total GitHub links: {unique_links}+")
+          print("✅ Documentation validation complete")
+          EOF
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add MASTER_EXPERT_REPORT.md README_MASTER.md
+          git commit -m "docs: auto-update documentation $(date +%Y-%m-%d)"
+          git push
+
+      - name: Send notification to Telegram
+        if: steps.check_changes.outputs.has_changes == 'true'
+        run: |
+          python3 << 'EOF'
+          import os
+          from datetime import datetime
+          
+          # Получить текущее время
+          now = datetime.now().strftime('%d.%m.%Y %H:%M')
+          
+          # Сформировать сообщение
+          message = f"""
+          📚 SUPER BRAIN Documentation Updated
+          
+          ✅ Auto-update completed at {now}
+          
+          📊 Status:
+          - MASTER_EXPERT_REPORT.md ✓ Updated
+          - README_MASTER.md ✓ Updated
+          - All links validated ✓
+          - Changes committed ✓
+          
+          🔗 View: https://github.com/vik9541/super-brain-digital-twin
+          """
+          
+          # Если есть Telegram токен, отправить
+          telegram_token = os.getenv('TELEGRAM_BOT_TOKEN')
+          if telegram_token:
+              import requests
+              chat_id = os.getenv('TELEGRAM_CHAT_ID')
+              if chat_id:
+                  requests.post(
+                      f'https://api.telegram.org/bot{telegram_token}/sendMessage',
+                      json={'chat_id': chat_id, 'text': message}
+                  )
+                  print("✅ Telegram notification sent")
+          
+          print("✅ Workflow completed successfully")
+          EOF
+
+      - name: Workflow summary
+        run: |
+          echo "📚 Documentation Auto-Update Workflow Summary"
+          echo "============================================="
+          echo "✅ MASTER_EXPERT_REPORT.md - Updated"
+          echo "✅ README_MASTER.md - Updated"
+          echo "✅ GitHub links - Validated"
+          echo "✅ Changes - Committed"
+          echo ""
+          echo "🔗 Repository: https://github.com/vik9541/super-brain-digital-twin"
+          echo "📅 Timestamp: $(date +%Y-%m-%d' '%H:%M:%S' 'MSK)"

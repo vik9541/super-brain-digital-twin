@@ -1,0 +1,91 @@
+name: Validate Documentation Links
+
+on:
+  pull_request:
+    paths:
+      - '**.md'
+      - '.github/workflows/validate-links.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - '**.md'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate GitHub links
+        run: |
+          python3 << 'EOF'
+          import os
+          import re
+          import json
+          
+          errors = []
+          warnings = []
+          
+          # Найти все GitHub ссылки в markdown файлах
+          for root, dirs, files in os.walk('.'):
+              # Пропустить .git и node_modules
+              if '.git' in root or 'node_modules' in root:
+                  continue
+              
+              for file in files:
+                  if file.endswith('.md'):
+                      filepath = os.path.join(root, file)
+                      with open(filepath, 'r', encoding='utf-8') as f:
+                          content = f.read()
+                          lines = content.split('\n')
+                          
+                          for i, line in enumerate(lines, 1):
+                              # Проверить формат GitHub ссылок
+                              if 'github.com' in line:
+                                  # Должны быть полные ссылки с https://
+                                  if 'https://github.com' not in line:
+                                      errors.append(f"{filepath}:{i} - Missing https:// in GitHub link")
+                                  
+                                  # Проверить основной путь
+                                  if not re.search(r'https://github\.com/[a-zA-Z0-9_-]+/', line):
+                                      errors.append(f"{filepath}:{i} - Invalid GitHub URL format")
+          
+          # Выводить результаты
+          if errors:
+              print("❌ Validation Errors:")
+              for error in errors:
+                  print(f"  - {error}")
+              exit(1)
+          else:
+              print("✅ All documentation links validated successfully")
+          
+          if warnings:
+              print("⚠️ Warnings:")
+              for warning in warnings:
+                  print(f"  - {warning}")
+          EOF
+
+      - name: Check file naming
+        run: |
+          python3 << 'EOF'
+          import os
+          
+          # Проверить соглашения именования файлов
+          for root, dirs, files in os.walk('DEPARTMENTS'):
+              for file in files:
+                  if file.endswith('.md'):
+                      # Должны быть UPPERCASE с подчеркиваниями
+                      if not file.isupper() and file != 'README.md':
+                          if not file.replace('_', '').isupper():
+                              print(f"⚠️ Consider using UPPERCASE naming: {os.path.join(root, file)}")
+          
+          print("✅ File naming check complete")
+          EOF
+
+      - name: Summary
+        run: |
+          echo "✅ All validation checks passed"
+          echo "📊 Documentation is healthy and ready for production"
