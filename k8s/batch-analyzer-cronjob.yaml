@@ -1,0 +1,75 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: batch-analyzer
+  namespace: production
+  labels:
+    app: digital-twin
+    component: batch-analyzer
+spec:
+  # Каждые 2 часа в 02:00 UTC (00:00, 02:00, 04:00 ... 22:00)
+  schedule: "0 */2 * * *"
+  concurrencyPolicy: Forbid  # Не рав другому
+  successfulJobsHistoryLimit: 3  # Хранить 3 успешных
+  failedJobsHistoryLimit: 3  # Хранить 3 неудачных
+  jobTemplate:
+    spec:
+      backoffLimit: 3  # Пересопробюй 3 раза
+      activeDeadlineSeconds: 3600  # Таймаут 1 час
+      template:
+        metadata:
+          labels:
+            app: digital-twin
+            batch: analyzer
+        spec:
+          serviceAccountName: batch-analyzer
+          restartPolicy: OnFailure
+          containers:
+          - name: analyzer
+            image: registry.digitalocean.com/digital-twin-registry/batch-analyzer:latest
+            imagePullPolicy: Always
+            env:
+            - name: SUPABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-credentials
+                  key: url
+            - name: SUPABASE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-credentials
+                  key: key
+            - name: PERPLEXITY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-credentials
+                  key: perplexity
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: api-credentials
+                  key: telegram
+            - name: BATCH_SIZE
+              value: "100"
+            - name: MAX_WORKERS
+              value: "5"
+            - name: TIMEOUT_SECONDS
+              value: "300"
+            resources:
+              requests:
+                cpu: 500m
+                memory: 1Gi
+              limits:
+                cpu: 2000m
+                memory: 2Gi
+            livenessProbe:
+              exec:
+                command: ["python", "-c", "import sys; sys.exit(0)"]
+              initialDelaySeconds: 10
+              periodSeconds: 30
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          volumes:
+          - name: tmp
+            emptyDir: {}
