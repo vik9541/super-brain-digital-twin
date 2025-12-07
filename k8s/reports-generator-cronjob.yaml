@@ -1,0 +1,91 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: reports-generator
+  namespace: production
+  labels:
+    app: digital-twin
+    component: reports-generator
+spec:
+  # Каждый час в XX:00 (00:00, 01:00, 02:00 ... 23:00)
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 5
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800  # 30 минут
+      template:
+        metadata:
+          labels:
+            app: digital-twin
+            reports: generator
+        spec:
+          serviceAccountName: reports-generator
+          restartPolicy: OnFailure
+          containers:
+          - name: generator
+            image: registry.digitalocean.com/digital-twin-registry/reports-generator:latest
+            imagePullPolicy: Always
+            env:
+            - name: SUPABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-credentials
+                  key: url
+            - name: SUPABASE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: supabase-credentials
+                  key: key
+            - name: TELEGRAM_BOT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: api-credentials
+                  key: telegram
+            - name: TELEGRAM_CHAT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: api-credentials
+                  key: telegram-chat-id
+            - name: SMTP_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: email-config
+                  key: smtp-host
+            - name: SMTP_USER
+              valueFrom:
+                secretKeyRef:
+                  name: email-credentials
+                  key: user
+            - name: SMTP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: email-credentials
+                  key: password
+            - name: SMTP_FROM
+              valueFrom:
+                configMapKeyRef:
+                  name: email-config
+                  key: from-email
+            - name: SMTP_TO
+              valueFrom:
+                configMapKeyRef:
+                  name: email-config
+                  key: to-emails
+            - name: REPORT_TEMPLATE
+              value: "hourly"
+            resources:
+              requests:
+                cpu: 250m
+                memory: 512Mi
+              limits:
+                cpu: 1000m
+                memory: 1Gi
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          volumes:
+          - name: tmp
+            emptyDir: {}
