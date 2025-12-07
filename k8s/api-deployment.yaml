@@ -12,8 +12,9 @@ spec:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
-        progressDeadlineSeconds: 1200
-      maxUnavailable: 0
+              maxUnavailable: 0
+                progressDeadlineSeconds: 1200
+      
   selector:
     matchLabels:
       app: api
