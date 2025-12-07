@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-alert-rules
+  namespace: monitoring
+data:
+  alert-rules.yaml: |
+    groups:
+      - name: digital-twin-alerts
+        interval: 1m
+        rules:
+          # API алерты
+          - alert: HighAPIErrorRate
+            expr: api:error_rate > 0.05
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High API error rate ({{ $value | humanizePercentage }})"
+              description: "API error rate is above 5%"
+
+          - alert: SlowAPIResponse
+            expr: api:request_duration:p99 > 2000
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Slow API response time ({{ $value | humanizeDuration }})"
+              description: "p99 response time is above 2 seconds"
+
+          # Bot алерты
+          - alert: BotHighLatency
+            expr: bot:message_latency:avg > 5000
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Bot message latency is high ({{ $value | humanizeDuration }})"
+              description: "Average message latency exceeds 5 seconds"
+
+          # Batch анализатор алерты
+          - alert: BatchAnalyzerErrors
+            expr: batch:error_rate > 0.1
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Batch analyzer errors ({{ $value | humanizePercentage }})"
+              description: "Error rate exceeds 10%"
+
+          # K8s алерты
+          - alert: HighNodeCPU
+            expr: node:cpu_usage > 80
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High CPU usage ({{ $value | humanizePercentage }})"
+              description: "Node CPU usage exceeds 80%"
+
+          - alert: HighNodeMemory
+            expr: node:memory_usage > 85
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage ({{ $value | humanizePercentage }})"
+              description: "Node memory usage exceeds 85%"
