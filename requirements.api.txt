@@ -1,0 +1,44 @@
+# Requirements for TASK-005: API Extensions
+# FastAPI Application with 4 Endpoints
+
+# FastAPI Core
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+
+# HTTP Client
+httpx==0.26.0
+
+# Data Validation
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# CORS
+python-multipart==0.0.6
+
+# WebSocket
+websockets==12.0
+
+# Database
+supabase==2.3.4
+postgresql==1.0
+
+# System Monitoring
+psutil==5.9.7
+
+# Prometheus Metrics (optional)
+prometheus-client==0.19.0
+
+# Async Support
+aiohttp==3.9.1
+aiofiles==23.2.1
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+
+# Logging
+python-json-logger==2.0.7
+
+# Utilities
+python-dotenv==1.0.0
