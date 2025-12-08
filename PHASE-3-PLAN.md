@@ -88,7 +88,7 @@ class WebhookHandler:
 
 ### **⏳ SUB-TASK 3: Bot Commands (2 hours)**
 **Time:** 12:00-14:00 MSK  
-**Status:** ⏳ TODO
+**Status:** ✅ COMPLETED (12:30 MSK)
 
 #### **Command 1: /start**
 ```python
@@ -208,7 +208,7 @@ async def cmd_status(message):
 
 ### **⏳ SUB-TASK 4: Real-Time Handling (2 hours)**
 **Time:** 14:00-16:00 MSK  
-**Status:** ⏳ TODO
+**Status:** ✅ COMPLETED (12:30 MSK)
 
 #### **Message Routing**
 ```python
@@ -272,7 +272,7 @@ class ErrorNotifier:
 
 ### **⏳ SUB-TASK 5: Testing & Deployment (1 hour)**
 **Time:** 16:00-17:00 MSK  
-**Status:** ⏳ TODO
+**Status:** ✅ COMPLETED (12:30 MSK)
 
 #### **Testing**
 ```bash
