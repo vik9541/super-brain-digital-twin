@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: super-brain-prod
+  labels:
+    name: super-brain-prod
+    environment: production
+    project: super-brain
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shop-97k-prod
+  labels:
+    name: shop-97k-prod
+    environment: production
+    project: shop-97k
