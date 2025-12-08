@@ -42,3 +42,13 @@ python-json-logger==2.0.7
 
 # Utilities
 python-dotenv==1.0.0
+
+
+# JWT Authentication
+python-jose[cryptography]>=3.3.0
+
+# Redis for caching and queues
+redis>=5.0.0
+
+# Rate Limiting
+slowapi>=0.1.9
