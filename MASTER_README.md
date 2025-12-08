@@ -2,7 +2,7 @@
 
 **Проект:** Цифровой Двойник с ИИ  
 **Статус:** 🟢 PRODUCTION (97v.ru)  
-**Обновлено:** 8 декабря 2025, 20:17 MSK  
+**Обновлено:** 8 декабря 2025, 21:00 MSK  
 **Версия ТЗ:** v4.0 FLEXIBLE  
 
 ---
@@ -254,6 +254,28 @@ DEPARTMENTS/SECURITY/
 
 ---
 
+## ✅ SUPABASE PROJECTS CLARITY
+
+### 🟢 PRODUCTION (Super Brain v4.0)
+- **Project ID:** `lvixtpatqrtuwnygtpjx`
+- **URL:** https://lvixtpatqrtuwnygtpjx.supabase.co
+- **Settings/API:** https://app.supabase.com/project/lvixtpatqrtuwnygtpjx/settings/api
+- **Region:** eu-central-1
+- **Name:** Knowledge_DBnanoAWS
+
+### 🟡 STAGING (97k.ru)
+- **Project ID:** `bvspfvshgpidpbhkvykb`
+- **URL:** https://bvspfvshgpidpbhkvykb.supabase.co
+- **Region:** eu-west-1
+- **Name:** internetMagazinmicroAWS
+
+### ❌ DEPRECATED (DO NOT USE)
+- **Project ID:** `hbdrmgtcvlwjcecptfxd`
+- **Status:** НЕ СУЩЕСТВУЕТ
+- **Action:** Удалена из всей документации
+
+---
+
 ## 🔗 ПОЛЕЗНЫЕ ССЫЛКИ
 
 ### Основная документация:
@@ -335,8 +357,8 @@ DEPARTMENTS/SECURITY/
 
 ---
 
-**Последнее обновление:** 8 декабря 2025, 20:17 MSK  
-**Версия:** MASTER v1.2 (с явными GitHub Issue ссылками)  
+**Последнее обновление:** 8 декабря 2025, 21:00 MSK  
+**Версия:** MASTER v1.3 (добавлен раздел Supabase Projects Clarity)  
 **Статус:** ✅ READY FOR PRODUCTION  
 **Коннектор:** ✅ ACTIVE (MCP GitHub)  
 **Автор:** Perplexity AI + vik9541  
