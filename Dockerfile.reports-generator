@@ -1,0 +1,41 @@
+# Dockerfile for Reports Generator
+# Super Brain Digital Twin - TASK-003
+
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    --no-install-recommends \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file
+COPY requirements.reports.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.reports.txt
+
+# Copy application code
+COPY reports_generator.py .
+COPY src/ src/ 2>/dev/null || true
+
+# Create non-root user
+RUN useradd -m -u 1000 reporter && \
+    chown -R reporter:reporter /app
+
+USER reporter
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)"
+
+# Run the application
+CMD ["python", "-u", "reports_generator.py"]
