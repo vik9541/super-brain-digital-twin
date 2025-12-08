@@ -1,6 +1,6 @@
 # 🔐 УПРАВЛЕНИЕ СЕКРЕТАМИ И ТОКЕНАМИ
 
-**Версия:** 2.0 (Secure)  
+**Версия:** 2.1 (Production Fix)  
 **Дата:** 8 декабря 2025  
 **Статус:** ✅ Production Ready  
 
@@ -81,6 +81,9 @@
 
 ### Supabase Credentials (3 типа)
 ```
+# Production: Knowledge_DBnanoAWS (lvixtpatqrtuwnygtpjx, eu-central-1)
+# Staging: internetMagazinmicroAWS (bvspfvshgpidpbhkvykb, eu-west-1)
+
 🎯 ANON KEY:
    Локально:       CREDENTIALS/.env → SUPABASE_ANON_KEY
    GitHub Secrets: SUPABASE_ANON_KEY
@@ -141,7 +144,8 @@
 
 #### Supabase Keys
 ```bash
-# Перейти: https://app.supabase.com/project/hbdrmgtcvlwjcecptfxd/settings/api
+# Production Project: Knowledge_DBnanoAWS
+# Перейти: https://app.supabase.com/project/lvixtpatqrtuwnygtpjx/settings/api
 # Получить:
 # - Public API key (ANON_KEY)
 # - Service Role key (SERVICE_ROLE_KEY)
@@ -227,7 +231,7 @@ KUBECONFIG_PROD            # base64 encoded
 K8S_CLUSTER_ID
 K8S_NAMESPACE
 
-# Supabase
+# Supabase (Production: lvixtpatqrtuwnygtpjx)
 SUPABASE_URL
 SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
@@ -539,7 +543,8 @@ echo "[SECURITY INCIDENT] Token leaked on $(date)" >> SECURITY_LOG.txt
 
 ---
 
-**Версия:** 2.0  
+**Версия:** 2.1  
 **Статус:** ✅ Production Ready  
 **Последнее обновление:** 8 декабря 2025  
 **Ответственный:** DevOps Team  
+**Изменения:** Обновлен Supabase Project ID (lvixtpatqrtuwnygtpjx) для Production  
