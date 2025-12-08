@@ -20,6 +20,19 @@ import psutil
 import logging
 import os
 
+# JWT Authentication
+from api.auth import verify_jwt_token
+
+# Redis for caching
+import redis.asyncio as redis
+import json
+
+# Rate Limiting
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi import Request
+
 # Initialize FastAPI app
 app = FastAPI(
     title="Super Brain API Extensions",
@@ -44,6 +57,18 @@ logger = logging.getLogger(__name__)
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
 
+# Rate limiter initialization
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Redis client initialization
+redis_client = redis.from_url(
+    os.getenv("REDIS_URL", "redis://localhost:6379"),
+    encoding="utf-8",
+    decode_responses=True
+)
+
 # ===== ENDPOINT 1: GET /api/v1/analysis/{id} =====
 
 class AnalysisResult(BaseModel):
@@ -55,7 +80,7 @@ class AnalysisResult(BaseModel):
     updated_at: datetime
     error: Optional[str] = None
 
-@app.get("/api/v1/analysis/{analysis_id}", response_model=AnalysisResult)
+@app.get("/api/v1/analysis/{analysis_id}", response_model=AnalysisResult, dependencies=[Depends(verify_jwt_token)])
 async def get_analysis(
     analysis_id: str = Path(..., min_length=1, description="Analysis ID")
 ):
@@ -148,8 +173,9 @@ async def process_single_item(item: BatchItem) -> BatchItemResult:
             processing_time_ms=processing_time
         )
 
-@app.post("/api/v1/batch-process", response_model=BatchResponse)
-async def batch_process(request: BatchRequest):
+@app.post("/api/v1/batch-process", response_model=BatchResponse, dependencies=[Depends(verify_jwt_token)])
+@limiter.limit("10/minute")
+async def batch_process(request: Request, batch_request: BatchRequest):async def batch_process(request: BatchRequest):
     """
     Batch Process Items
     
