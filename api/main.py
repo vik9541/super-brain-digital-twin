@@ -175,7 +175,7 @@ async def process_single_item(item: BatchItem) -> BatchItemResult:
 
 @app.post("/api/v1/batch-process", response_model=BatchResponse, dependencies=[Depends(verify_jwt_token)])
 @limiter.limit("10/minute")
-async def batch_process(request: Request, batch_request: BatchRequest):async def batch_process(request: BatchRequest):
+async def batch_process(request: Request, batch_request: BatchRequest:
     """
     Batch Process Items
     
