@@ -51,4 +51,5 @@ python-jose[cryptography]>=3.3.0
 redis>=5.0.0
 
 # Rate Limiting
+slowapi==0.1.9
 slowapi>=0.1.9
