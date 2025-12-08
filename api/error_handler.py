@@ -18,7 +18,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Configuration
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8457627946:AAHUNkHo3PIsTVFgh9BRQ9TRn7Fc6eXm51k")
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8326941950:AAHxjtILMo9qgPjm1Ii8CSsIZMLSp3B2oVE")
 ADMIN_TELEGRAM_ID = os.getenv("ADMIN_TELEGRAM_ID", "123456789")  # Replace with actual admin ID
 TELEGRAM_API_BASE = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 
