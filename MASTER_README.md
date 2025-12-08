@@ -2,7 +2,7 @@
 
 **Проект:** Цифровой Двойник с ИИ  
 **Статус:** 🟢 PRODUCTION (97v.ru)  
-**Обновлено:** 8 декабря 2025, 19:51 MSK  
+**Обновлено:** 8 декабря 2025, 20:17 MSK  
 **Версия ТЗ:** v4.0 FLEXIBLE  
 
 ---
@@ -13,7 +13,7 @@
 
 ✅ **Что это означает:**
 - Все отчеты, которые ты будешь вносить ниже, **АВТОМАТИЧЕСКИ загружаются в GitHub**
-- Не нужно вручную commit'ить - я это сделаю через API
+- Не нужно вручную commit'ить - я это делаю через API
 - Все файлы загружаются с правильными paths и commit messages
 - История сохраняется в Git
 
@@ -40,46 +40,63 @@
 
 ---
 
-## 📍 ГЛАВНОЕ МЕНЮ ИНДЕКСА
+## 📋 ГЛАВНОЕ МЕНЮ ИНДЕКСА
 
 ### 🚀 БЫСТРЫЙ НАВИГАТОР
 
-| 📍 Что нужно? | 🔗 Переходи сюда |
+| 🎯 Что нужно? | 🔗 Переходи сюда |
 |:---|:---|
 | **Главное ТЗ проекта** | [SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md](./SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md) |
 | **Отчет экспертов** | [MASTER_EXPERT_REPORT.md](./MASTER_EXPERT_REPORT.md) |
 | **Структура команды** | [DEPARTMENTS/](#-departments--структура-команды) |
-| **Текущий прогресс** | [CHECKLIST.md](#-текущий-статус) |
-| **Архитектура системы** | [ARCHITECTURE.md](#-архитектура-системы) |
+| **Текущий прогресс** | [CHECKLIST.md](./CHECKLIST.md) |
+| **Архитектура системы** | [ARCHITECTURE.md](./ARCHITECTURE.md) |
 | **Инструкции для команды** | [Быстрый старт](#-быстрый-старт) |
 
 ---
 
-## 📚 ПОЛНЫЙ ИНДЕКС ДОКУМЕНТОВ
+## 🔗 ВСЕ GITHUB ISSUES ПО ПРОЕКТУ
 
-### 📋 ОСНОВНЫЕ ТЗ И ДОКУМЕНТАЦИЯ
+### 🟢 PRODUCTION DEPLOYMENT (TASK-PRD)
 
-```
-📂 Корневая папка
-├── README.md (текущий документ - Главное описание)
-├── MASTER_README.md ← ТЫ ЗДЕСЬ (Полный индекс + коннектор инструкции)
-├── MASTER_EXPERT_REPORT.md (Экспертные мнения + GitHub ссылки)
-│
-├── SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md ★ (ГЛАВНОЕ ТЗ - начни отсюда!)
-├── SUPER_BRAIN_ENTERPRISE_TZ_v3.0.md (Enterprise версия)
-├── SUPER_BRAIN_TZ_v2.0.md (Предыдущая версия)
-│
-├── ARCHITECTURE.md (Детальная архитектура)
-├── PROJECT.md (Подробный план проекта)
-├── CHECKLIST.md (Текущие задачи и прогресс)
-│
-├── PROGRESS/ (Логи завершённых работ - АВТОМАТИЧЕСКИ ЗАГРУЖАЮТСЯ)
-└── TASKS/ (Текущие задачи)
-```
+| Issue | Название | Статус | Ссылка |
+|:---:|:---|:---:|:---|
+| **#35** | **TASK-PRD-01**: Ротация DigitalOcean API токена | ✅ 100% | https://github.com/vik9541/super-brain-digital-twin/issues/35 |
+| **#36** | **TASK-PRD-02**: Docker образы (API + Bot) | ✅ 100% | https://github.com/vik9541/super-brain-digital-twin/issues/36 |
+| **#37** | **TASK-PRD-03**: Обновление Kubernetes Secrets | ✅ 100% | https://github.com/vik9541/super-brain-digital-twin/issues/37 |
+| **#38** | **TASK-PRD-04**: Развертывание API и Bot | ⏳ READY | https://github.com/vik9541/super-brain-digital-twin/issues/38 |
+| **#39** | **TASK-PRD-05**: Production Testing | ⏳ READY | https://github.com/vik9541/super-brain-digital-twin/issues/39 |
+| **#40** | **TASK-PRD-06**: Мониторинг и алерты | ✅ 100% | https://github.com/vik9541/super-brain-digital-twin/issues/40 |
 
-### 🏢 DEPARTMENTS — СТРУКТУРА КОМАНДЫ
+### 🟡 API DEVELOPMENT (TASK-005)
 
-#### 🧠 AI-ML DEPARTMENT
+| Issue | Название | Deadline | Ссылка |
+|:---:|:---|:---:|:---|
+| **#1** | **TASK-005-1**: GET /api/v1/analysis/{id} | 15 дек | https://github.com/vik9541/super-brain-digital-twin/issues/1 |
+| **#2** | **TASK-005-2**: POST /api/v1/batch-process | 15 дек | https://github.com/vik9541/super-brain-digital-twin/issues/2 |
+| **#3** | **TASK-005-3**: GET /api/v1/metrics | 15 дек | https://github.com/vik9541/super-brain-digital-twin/issues/3 |
+| **#4** | **TASK-005-4**: WebSocket /api/v1/live-events | 15 дек | https://github.com/vik9541/super-brain-digital-twin/issues/4 |
+
+### 🟠 ФУНКЦИОНАЛЬНОСТЬ
+
+| Issue | Название | Ссылка |
+|:---:|:---|:---|
+| **#40** | **TASK-002**: Batch Analyzer CronJob | https://github.com/vik9541/super-brain-digital-twin/issues/40 |
+| **#41** | **TASK-003**: Reports Generator CronJob | https://github.com/vik9541/super-brain-digital-twin/issues/41 |
+| **#42** | **TASK-001**: Telegram Bot функциональность | https://github.com/vik9541/super-brain-digital-twin/issues/42 |
+
+### 📚 МИГРАЦИЯ И ИНФРАСТРУКТУРА
+
+| Issue | Название | Ссылка |
+|:---:|:---|:---|
+| **#30** | **TASK-030**: Shell Space миграция сервера | https://github.com/vik9541/super-brain-digital-twin/issues/30 |
+| **#34** | **PROCESS-001**: Управление через GitHub Issues | https://github.com/vik9541/super-brain-digital-twin/issues/34 |
+
+---
+
+## 📁 DEPARTMENTS — СТРУКТУРА КОМАНДЫ
+
+### 🧠 AI-ML DEPARTMENT
 **Специализация:** Искусственный интеллект, машинное обучение, анализ данных
 
 ```
@@ -87,9 +104,9 @@ DEPARTMENTS/AI-ML/
 ├── README.md (Описание отдела)
 ├── TEAM_STRUCTURE.md (Роли: Lead AI Engineer, ML Ops, Data Scientist, NLP Specialist)
 ├── RECOMMENDATIONS.md (Best practices для AI/ML)
-├── EXPERT_OPINIONS.md ★ (Мнения экспертов + 9 GitHub ссылок)
+├── EXPERT_OPINIONS.md ⭐ (Мнения экспертов + 9 GitHub ссылок)
 │
-📍 Полная ссылка:
+🔗 Полная ссылка:
    https://github.com/vik9541/super-brain-digital-twin/tree/main/DEPARTMENTS/AI-ML/
 ```
 
@@ -101,7 +118,7 @@ DEPARTMENTS/AI-ML/
 
 ---
 
-#### 🏗️ INFRA DEPARTMENT
+### 🏗️ INFRA DEPARTMENT
 **Специализация:** Инфраструктура, DevOps, мониторинг, надежность
 
 ```
@@ -109,9 +126,9 @@ DEPARTMENTS/INFRA/
 ├── README.md (Описание отдела)
 ├── TEAM_STRUCTURE.md (Роли: Kubernetes Lead, DevOps, SRE, Cloud Architect)
 ├── RECOMMENDATIONS.md (Best practices для инфры)
-├── EXPERT_OPINIONS.md ★ (Мнения экспертов + 20+ GitHub ссылок)
+├── EXPERT_OPINIONS.md ⭐ (Мнения экспертов + 20+ GitHub ссылок)
 │
-📍 Полная ссылка:
+🔗 Полная ссылка:
    https://github.com/vik9541/super-brain-digital-twin/tree/main/DEPARTMENTS/INFRA/
 ```
 
@@ -124,7 +141,7 @@ DEPARTMENTS/INFRA/
 
 ---
 
-#### 🎯 PRODUCT DEPARTMENT
+### 👔 PRODUCT DEPARTMENT
 **Специализация:** Управление продуктом, качество, UX/UI, документация
 
 ```
@@ -132,9 +149,9 @@ DEPARTMENTS/PRODUCT/
 ├── README.md (Описание отдела)
 ├── TEAM_STRUCTURE.md (Роли: PM, QA Lead, QA Engineer, UX/UI, Technical Writer)
 ├── RECOMMENDATIONS.md (Best practices для продукта)
-├── EXPERT_OPINIONS.md ★ (Мнения экспертов + 10+ GitHub ссылок)
+├── EXPERT_OPINIONS.md ⭐ (Мнения экспертов + 10+ GitHub ссылок)
 │
-📍 Полная ссылка:
+🔗 Полная ссылка:
    https://github.com/vik9541/super-brain-digital-twin/tree/main/DEPARTMENTS/PRODUCT/
 ```
 
@@ -147,7 +164,7 @@ DEPARTMENTS/PRODUCT/
 
 ---
 
-#### 🔒 SECURITY DEPARTMENT
+### 🔐 SECURITY DEPARTMENT
 **Специализация:** Безопасность, compliance, защита данных, управление рисками
 
 ```
@@ -155,9 +172,9 @@ DEPARTMENTS/SECURITY/
 ├── README.md (Описание отдела)
 ├── TEAM_STRUCTURE.md (Роли: Security Lead, AppSec Engineer, Infrastructure Security, Researcher)
 ├── RECOMMENDATIONS.md (Best practices для security)
-├── EXPERT_OPINIONS.md ★ (Мнения экспертов + 15+ GitHub ссылок)
+├── EXPERT_OPINIONS.md ⭐ (Мнения экспертов + 15+ GitHub ссылок)
 │
-📍 Полная ссылка:
+🔗 Полная ссылка:
    https://github.com/vik9541/super-brain-digital-twin/tree/main/DEPARTMENTS/SECURITY/
 ```
 
@@ -170,225 +187,108 @@ DEPARTMENTS/SECURITY/
 
 ---
 
-## 🎓 КАК ПОЛЬЗОВАТЬСЯ ЭТИМ ИНДЕКСОМ
+## 🎯 ТЕКУЩИЙ СТАТУС ПРОЕКТА
+
+### ✅ Завершено (100%):
+- [x] DigitalOcean DOKS кластер развёрнут
+- [x] NGINX Ingress установлен
+- [x] cert-manager + SSL сертификаты
+- [x] API pods работают (digital-twin-api)
+- [x] Prometheus + Grafana мониторинг
+- [x] DNS 97v.ru настроен
+- [x] Исправлена ошибка supabase proxy
+- [x] Docker образы (API + Bot) готовы
+- [x] GitHub Actions CI/CD пайплайн
+- [x] Kubernetes manifests подготовлены
+- [x] API Token ротация завершена
+
+### 🟡 В процессе (Требует Secrets):
+- [ ] Production Secrets добавлены (7 secrets)
+- [ ] Bot развернут на production
+- [ ] Batch analyzer запущен
+- [ ] Reports generator запущен
+- [ ] Telegram интеграция активирована
+
+### ⚪ Планируется:
+- [ ] 97k.ru (Комплексный поставщик)
+- [ ] Dashboard расширенной аналитики
+- [ ] WebSocket real-time обновления
+- [ ] GraphQL API
+- [ ] Mobile приложение
+
+---
+
+## 🚀 БЫСТРЫЙ СТАРТ
 
 ### Для новых членов команды:
-1. 👇 Откройте [SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md](./SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md) (главное ТЗ)
-2. 👇 Найдите свой отдел в [DEPARTMENTS/](#-departments--структура-команды)
-3. 👇 Прочитайте `TEAM_STRUCTURE.md` в своём отделе
-4. 👇 Посмотрите `EXPERT_OPINIONS.md` для рекомендаций
-5. 👇 Следуйте GitHub ссылкам для инструментов
+1. 📖 Откройте [SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md](./SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md) (главное ТЗ)
+2. 👥 Найдите свой отдел в [DEPARTMENTS/](#-departments--структура-команды)
+3. 📚 Прочитайте `TEAM_STRUCTURE.md` в своём отделе
+4. 💡 Посмотрите `EXPERT_OPINIONS.md` для рекомендаций
+5. 🔗 Следуйте GitHub ссылкам для инструментов
 
 ### Для планирования работы:
-1. 📍 Посмотри [CHECKLIST.md](./CHECKLIST.md) для текущих задач
-2. 📍 Проверь [MASTER_EXPERT_REPORT.md](./MASTER_EXPERT_REPORT.md) для приоритетов
-3. 📍 Возьми задачу из `TASKS/` папки
-4. 📍 Выполни и отправь отчет (автоматически загрузится в `PROGRESS/`)
+1. 📋 Посмотри [CHECKLIST.md](./CHECKLIST.md) для текущих задач
+2. 📊 Проверь [MASTER_EXPERT_REPORT.md](./MASTER_EXPERT_REPORT.md) для приоритетов
+3. 🎯 Выбери Issue из таблицы выше
+4. 📌 Начни работу
 
 ### Для изучения технологий:
-1. 🔗 Переходи по GitHub ссылкам из `EXPERT_OPINIONS.md`
-2. 🔗 Прочитай документацию в репозиториях
-3. 🔗 Попробуй в тестовом окружении
-4. 🔗 Примени в production
+1. 🔗 Перейди по GitHub ссылкам из `EXPERT_OPINIONS.md`
+2. 📖 Прочитай документацию в репозиториях
+3. 🧪 Попробуй в тестовом окружении
+4. 🚀 Примени в своём проекте
 
 ---
 
-## 🎯 БЫСТРЫЙ СТАРТ
+## 📊 ИНФРАСТРУКТУРА
 
-### Если у тебя есть 10 минут:
-```bash
-# 1. Прочитай главное ТЗ
-cat SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md | head -100
-
-# 2. Посмотри отчет экспертов
-cat MASTER_EXPERT_REPORT.md | grep "Recommendations Priority"
-```
-
-### Если у тебя есть 30 минут:
-```bash
-# 1. Ознакомься с архитектурой
-cat ARCHITECTURE.md
-
-# 2. Посмотри свой отдел
-cd DEPARTMENTS/[YOUR_DEPARTMENT]
-cat README.md && cat TEAM_STRUCTURE.md
-
-# 3. Запиши GitHub ссылки
-cat EXPERT_OPINIONS.md | grep "https://github.com"
-```
-
-### Если у тебя есть 1 час:
-```bash
-# 1. Прочитай всё ТЗ
-cat SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md
-
-# 2. Изучи весь MASTER_EXPERT_REPORT
-cat MASTER_EXPERT_REPORT.md
-
-# 3. Посмотри текущий прогресс
-cat CHECKLIST.md
-
-# 4. Выбери один инструмент и почитай его документацию
-```
+| Компонент | Статус | URL | Детали |
+|-----------|--------|-----|--------|
+| **API** | ✅ | https://97v.ru | FastAPI на DigitalOcean DOKS |
+| **Grafana** | ✅ | Port 3000 (port-forward) | Мониторинг метрик |
+| **Prometheus** | ✅ | Port 9090 | Сбор метрик |
+| **Ingress** | ✅ | NGINX | Маршрутизация трафика |
+| **SSL** | ✅ | Let's Encrypt | Auto-renew через cert-manager |
+| **Registry** | ✅ | DigitalOcean | Docker образы |
 
 ---
 
-## 📊 СТАТИСТИКА ПРОЕКТА
-
-### Документация
-- **7** главных ТЗ документов
-- **4** отдела с полной документацией
-- **12+** экспертных мнений
-- **60+** GitHub ссылок на инструменты
-- **16** документов в DEPARTMENTS/ (4 отдела × 4 файла)
-
-### Команда
-- **1** главный разработчик (vik9541)
-- **12+** виртуальных специалистов (эксперты)
-- **4** отдела
-- **20+** различных специализаций
-
-### Технологии
-- **Kubernetes** (DigitalOcean DOKS)
-- **Python** (FastAPI, Telegram Bot)
-- **AI/ML** (Perplexity, LLMs)
-- **Database** (Supabase)
-- **Monitoring** (Prometheus, Grafana)
-- **Security** (cert-manager, sealed-secrets)
-
----
-
-## 🔗 ГЛАВНЫЕ ССЫЛКИ
+## 🔗 ПОЛЕЗНЫЕ ССЫЛКИ
 
 ### Основная документация:
-- ★ [SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md](./SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md) — **ГЛАВНОЕ ТЗ, начни отсюда!**
-- 📊 [MASTER_EXPERT_REPORT.md](./MASTER_EXPERT_REPORT.md) — Все экспертные мнения + GitHub ссылки
-- 🏗️ [ARCHITECTURE.md](./ARCHITECTURE.md) — Детальная архитектура системы
-- 📋 [CHECKLIST.md](./CHECKLIST.md) — Текущие задачи и прогресс
-- 📁 [PROJECT.md](./PROJECT.md) — Подробный план проекта
+- 🟢 [SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md](./SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md) — **ГЛАВНОЕ ТЗ**
+- 📊 [MASTER_EXPERT_REPORT.md](./MASTER_EXPERT_REPORT.md) — Эксперт мнения + GitHub ссылки
+- 🏗️ [ARCHITECTURE.md](./ARCHITECTURE.md) — Детальная архитектура
+- 📋 [CHECKLIST.md](./CHECKLIST.md) — Текущие задачи
+- 📄 [PROJECT.md](./PROJECT.md) — Подробный план
 
-### GitHub структура:
-- 🧠 [DEPARTMENTS/AI-ML/](./DEPARTMENTS/AI-ML/) — ИИ и Machine Learning
-- 🏗️ [DEPARTMENTS/INFRA/](./DEPARTMENTS/INFRA/) — Инфраструктура и DevOps
-- 🎯 [DEPARTMENTS/PRODUCT/](./DEPARTMENTS/PRODUCT/) — Продукт и Качество
-- 🔒 [DEPARTMENTS/SECURITY/](./DEPARTMENTS/SECURITY/) — Безопасность и Compliance
+### GitHub Issues:
+- 🔗 **Production Deployment**: [Issues #35-40](https://github.com/vik9541/super-brain-digital-twin/issues?q=is%3Aissue+%23%3A35-40)
+- 🔗 **API Development**: [Issues #1-4](https://github.com/vik9541/super-brain-digital-twin/issues?q=is%3Aissue+%231-4)
+- 🔗 **All Issues**: https://github.com/vik9541/super-brain-digital-twin/issues
 
-### Внешние ссылки:
-- 🌐 **Проект в Production:** https://97v.ru
-- 📦 **GitHub Организация:** https://github.com/vik9541
-- 🐳 **DigitalOcean Registry:** container registry for Docker images
-- ☁️ **DigitalOcean DOKS:** Kubernetes cluster NYC2
+### DEPARTMENTS:
+- 🧠 [AI-ML Department](./DEPARTMENTS/AI-ML/)
+- 🏗️ [INFRA Department](./DEPARTMENTS/INFRA/)
+- 👔 [PRODUCT Department](./DEPARTMENTS/PRODUCT/)
+- 🔐 [SECURITY Department](./DEPARTMENTS/SECURITY/)
 
----
-
-## 🚀 ТЕКУЩИЙ СТАТУС
-
-### ✅ Завершено (100%)
-- [x] DigitalOcean DOKS кластер
-- [x] NGINX Ingress
-- [x] SSL/TLS (cert-manager)
-- [x] Prometheus + Grafana
-- [x] Supabase интеграция
-- [x] DNS 97v.ru
-- [x] API deployment
-- [x] DEPARTMENTS структура
-- [x] Экспертные мнения
-- [x] Этот MASTER README
-- [x] Docker образы (API + Bot)
-- [x] GitHub Actions CI/CD
-- [x] Kubernetes Deployments
-- [x] API Token ротация
-
-### 🟡 В процессе (50%)
-- [ ] Bot функциональность
-- [ ] Batch analyzer
-- [ ] Reports generator
-- [ ] CI/CD optimization
-- [ ] ArgoCD GitOps
-- [ ] Production deployment (TASK-PRD-03, 04, 05)
-
-### ⚪ Планируется (0%)
-- [ ] 97k.ru (Supplier site)
-- [ ] WebSocket real-time
-- [ ] GraphQL API
-- [ ] Mobile app
-- [ ] Multi-region HA
+### Внешние ресурсы:
+- 🌐 **Production**: https://97v.ru
+- 📦 **GitHub Org**: https://github.com/vik9541
+- 🐳 **DigitalOcean Registry**: container registry
+- ☸️ **DigitalOcean DOKS**: Kubernetes cluster NYC2
 
 ---
 
-## 👥 ЭКСПЕРТЫ КОМАНДЫ
+## 👥 КОМАНДА
 
-### AI-ML (4 специалиста)
-1. **Andrey M.** — Lead AI Engineer
-2. **Dmitry K.** — ML Operations Engineer
-3. **Natalia V.** — Data Science Lead
-4. **Igor S.** — NLP Specialist
-
-### INFRA (4 специалиста)
-1. **Pavel T.** — Kubernetes & Platform Lead
-2. **Sergey B.** — DevOps & CI/CD Architect
-3. **Marina G.** — SRE & Observability Expert
-4. **Alexei M.** — Cloud Architect
-
-### PRODUCT (4 специалиста)
-1. **Elena R.** — Senior Product Manager
-2. **Dmitry P.** — QA Lead
-3. **Olga K.** — UX/UI Designer
-4. **Ivan M.** — Technical Writer
-
-### SECURITY (4 специалиста)
-1. **Alexander Z.** — Security & Compliance Lead
-2. **Mikhail V.** — Application Security Engineer
-3. **Roman S.** — Infrastructure Security
-4. **Natalia B.** — Security Researcher
-
----
-
-## 📞 СВЯЗЬ И ПОДДЕРЖКА
-
-- **GitHub Issues:** Создавай issue для проблем
-- **GitHub Discussions:** Обсуждай идеи
-- **Pull Requests:** Предлагай улучшения
-- **DEPARTMENTS:** Пиши в свой отдел
-- **Email:** vik9541@bk.ru
-- **Автоматизация:** Все отчеты загружаются автоматически через MCP коннектор
-
----
-
-## 🎓 ОБРАЗОВАТЕЛЬНЫЕ РЕСУРСЫ
-
-Все GitHub ссылки ведут на:
-- 📚 Документацию
-- 💻 Примеры кода
-- 🧪 Тесты и примеры
-- 📖 Best practices
-- 🎯 Real-world применение
-
-**Алгоритм обучения:**
-1. Прочитай README проекта на GitHub
-2. Посмотри примеры (examples/ или docs/)
-3. Изучи документацию
-4. Напробуй самостоятельно
-5. Примени в своём проекте
-
----
-
-## 🎯 СЛЕДУЮЩИЕ ШАГИ
-
-### День 1:
-- [ ] Прочитай [SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md](./SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md)
-- [ ] Посмотри свой отдел в [DEPARTMENTS/](#-departments--структура-команды)
-- [ ] Запомни 5-10 главных GitHub ссылок
-
-### День 2:
-- [ ] Прочитай [MASTER_EXPERT_REPORT.md](./MASTER_EXPERT_REPORT.md)
-- [ ] Посмотри текущие задачи в [CHECKLIST.md](./CHECKLIST.md)
-- [ ] Выбери первую задачу
-
-### День 3:
-- [ ] Начни работать над задачей
-- [ ] Используй GitHub ссылки для инструментов
-- [ ] Отправь отчет (автоматически загрузится в GitHub)
+- **Главный разработчик:** vik9541 (ты)
+- **AI Помощник:** Perplexity Claude
+- **Project Manager:** GitHub Issues
+- **DevOps:** Kubernetes + DigitalOcean
+- **Monitoring:** Prometheus + Grafana
 
 ---
 
@@ -401,14 +301,25 @@ cat CHECKLIST.md
 ✅ **Production ready** — Всё развёрнуто и работает  
 ✅ **Масштабируемо** — K8s, модульная архитектура  
 ✅ **Secure по умолчанию** — SSL, RBAC, network policies  
-✅ **Автоматизирована** — MCP коннектор для auto-upload отчетов  
+✅ **Автоматизировано** — MCP коннектор для auto-upload отчетов  
 ✅ **Мониторинг и логирование** — Prometheus, Grafana, лог-агрегация  
 
 ---
 
-## 🚀 ИТОГОВОЕ РЕЗЮМЕ
+## 📞 КОНТАКТЫ И ПОДДЕРЖКА
 
-### Это твой SUPER BRAIN проект:  
+- **GitHub Issues:** Создавай issues для проблем
+- **GitHub Discussions:** Обсуждай идеи
+- **Pull Requests:** Предлагай улучшения
+- **DEPARTMENTS:** Пиши в свой отдел
+- **Email:** vik9541@bk.ru
+- **Автоматизация:** Всё через MCP коннектор
+
+---
+
+## 🎉 ИТОГОВОЕ РЕЗЮМЕ
+
+### Это твой SUPER BRAIN проект:
 **Один Telegram интерфейс**  
 **Вся твоя информация**  
 **Умные агенты**  
@@ -424,22 +335,21 @@ cat CHECKLIST.md
 
 ---
 
-**Последнее обновление:** 8 декабря 2025, 19:51 MSK  
-**Версия:** MASTER v1.1  
+**Последнее обновление:** 8 декабря 2025, 20:17 MSK  
+**Версия:** MASTER v1.2 (с явными GitHub Issue ссылками)  
 **Статус:** ✅ READY FOR PRODUCTION  
 **Коннектор:** ✅ ACTIVE (MCP GitHub)  
 **Автор:** Perplexity AI + vik9541  
 
 ---
 
-## 🎓 ГЛАВНОЕ ПРАВИЛО
+## 🏁 ГЛАВНОЕ ПРАВИЛО
 
-> **Перед тем, как начать работу:**
-> 1. Прочитай это (MASTER_README.md)
-> 2. Прочитай главное ТЗ (SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md)
-> 3. Посмотри экспертные мнения (MASTER_EXPERT_REPORT.md)
-> 4. Найди свой отдел (DEPARTMENTS/)
+> **Перед началом работы:**
+> 1. Открой [SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md](./SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md) ← ГЛАВНОЕ ТЗ
+> 2. Прочитай ТЗ своего отдела в [DEPARTMENTS/](./DEPARTMENTS/)
+> 3. Посмотри GitHub Issue ссылку выше
+> 4. Начни работу!
 > 5. **Помни:** Все отчеты автоматически загружаются в GitHub через MCP коннектор
-> 6. Начинай работу!
 
-**Всё что нужно знать - в этом репо! 🚀**
+**Всё что нужно знать - в этом репозитории! 🚀**
