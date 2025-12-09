@@ -19,9 +19,9 @@
 
 ---
 
-**Дата:** 7 декабря 2025, 17:55 MSK  
+**Дата:** 9 декабря 2025, 22:00 MSK  
 **Статус:** ✅ FLEXIBLE ARCHITECTURE  
-**Версия:** 4.0  
+**Версия:** 4.1 (Modular Expansion)  
 **Концепция:** Один Telegram интерфейс = Вся информация + Умные Агенты + Динамические Сценарии
 
 ---
@@ -83,16 +83,13 @@
         │                                  │
         │  1. Analyzer                     │
         │     └─ Анализирует ВСЁ          │
-        │     └─ Предлагает структуру     │
-        │     └─ Обучается                │
         │                                  │
         │  2. Organizer                    │
         │     └─ Загружает в нужные места │
-        │     └─ Задает вопросы           │
-        │     └─ Уточняет детали         │
         │                                  │
-        │  3-N. Custom Agents (Сценарии)  │
-        │     └─ Создаются под задачи    │
+        │  3-N. MODULES (NEW!)            │
+        │     └─ Contact Intelligence     │
+        │     └─ Finance Tracker          │
         └──────────────────────────────────┘
         
         ┌────────────▼────────────────────────┐
@@ -105,6 +102,28 @@
         │  - WebSocket /api/v1/live-events   │
         └────────────────────────────────────┘
 ```
+
+---
+
+## 🧱 4.4. MODULAR ARCHITECTURE (NEW STANDARD)
+
+Super Brain теперь поддерживает модульное расширение через стандарт `/modules`.
+
+**📜 Главный манифест модулей:** [MODULES_MANIFEST.md](./MODULES_MANIFEST.md)
+
+### ✅ Текущие активные модули:
+
+#### 1️⃣ **CONTACT INTELLIGENCE MODULE**
+**Статус:** Active  
+**Описание:** Умный анализ общения в Telegram/WhatsApp, память диалогов, автоответы в стиле пользователя.  
+**Спецификация:** [modules/contact_intelligence/00_SPECIFICATION.md](./modules/contact_intelligence/00_SPECIFICATION.md)  
+**Сценарии:** [modules/contact_intelligence/01_SCENARIOS.md](./modules/contact_intelligence/01_SCENARIOS.md)  
+
+**Ключевые функции:**
+- Full Context Analysis (OpenAI GPT-4o)
+- AES-256 Encryption (At-rest security)
+- RAG Memory (pgvector search)
+- n8n Integration
 
 ---
 
@@ -968,8 +987,8 @@ ITOGO: 3 nedeli do pervoy versii!
 
 ---
 
-**Дата утверждения:** 7 декабря 2025, 17:55 MSK  
-**Версия:** 4.0 FLEXIBLE  
+**Дата утверждения:** 9 декабря 2025, 22:00 MSK  
+**Версия:** 4.1 FLEXIBLE (Modular)  
 **Статус:** APPROVED ✅  
 **Автор:** Perplexity AI + vik9541  
 **Платформа:** Telegram + Supabase + Python + FastAPI
