@@ -46,3 +46,15 @@ jobs:
           kubectl rollout status deployment/api -n production
           kubectl get pods -n production -l app=api
           kubectl get svc api -n production
+
+              - name: Diagnostic - show pod status and logs
+      if: always()
+      run: |
+        echo "=== Pod Status ==="
+        kubectl get pods -n production -l app=api
+        echo ""
+        echo "=== Pod Details ==="
+        kubectl describe pods -n production -l app=api | tail -50
+        echo ""
+        echo "=== Pod Logs ==="
+        kubectl logs -n production -l app=api --tail=100 --all-containers=true || echo "No logs available"
