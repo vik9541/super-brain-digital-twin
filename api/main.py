@@ -7,7 +7,7 @@ Endpoints:
 4. WebSocket /api/v1/live-events - Real-time events
 """
 
-from fastapi import FastAPI, HTTPException, Path, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Path, WebSocket, WebSocketDisconnect, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import List, Optional, Set, Dict
@@ -195,7 +195,7 @@ async def batch_process(request: Request, batch_request: BatchRequest):
     start_time = time.time()
     
     try:
-        tasks = [process_single_item(item) for item in request.items]
+        tasks = [process_single_item(item) for item in batch_request.items]
         results = await asyncio.gather(*tasks)
         
         processed = sum(1 for r in results if r.status == "success")
@@ -206,7 +206,7 @@ async def batch_process(request: Request, batch_request: BatchRequest):
         
         return BatchResponse(
             batch_id=batch_id,
-            total_items=len(request.items),
+            total_items=len(batch_request.items),
             processed=processed,
             failed=failed,
             results=results,
