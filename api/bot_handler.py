@@ -15,8 +15,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Bot configuration
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8326941950:AAHxjtILMo9qgPjm1Ii8CSsIZMLSp3B2oVE")N8N_WEBHOOK_BASE = os.getenv("N8N_WEBHOOK_BASE", "https://lavrentev.app.n8n.cloud/webhook")
-
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8326941950:AAHx7hj1JcJLeQl8eS5sTFlkLJ5S3ZM|L5p3BZoVE")
+NBN_WEBHOOK_BASE = os.getenv("NBN_WEBHOOK_BASE", "https://lavrenter.app.n8n.cloud/webhook")
 # Initialize bot and dispatcher
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
