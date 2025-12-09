@@ -1,8 +1,9 @@
 # 🧪 TEST EXECUTION GUIDE
 
-**Date:** Dec 8, 2025  
+**Date:** Dec 9, 2025  
 **Status:** 🟢 READY TO RUN  
-**Updated:** 08:00 AM MSK  
+**Updated:** 08:50 AM MSK  
+**ℹ️ Supabase Reference:** [SUPABASE_PROJECTS_CLARITY.md](./SUPABASE_PROJECTS_CLARITY.md) (⭐ All Supabase questions answered here!)  
 
 ---
 
@@ -15,10 +16,13 @@
 cd ~/super-brain-digital-twin
 
 # Set environment variables
-export SUPABASE_URL="https://hbdrmgtcvlwjcecptfxd.supabase.co"
+export SUPABASE_URL="https://lvixtpatqrtuwhygtpjx.supabase.co"
 export SUPABASE_KEY="your-api-key-here"
 export API_URL="http://97v.ru"
 export API_TOKEN="your-token-here"  # Optional
+
+# ℹ️ Project Info: Knowledge_DBnanoAWS (97v.ru - Super Brain)
+# See: SUPABASE_PROJECTS_CLARITY.md for detailed Supabase structure
 ```
 
 ### Step 2: Install Dependencies
@@ -35,11 +39,11 @@ pip install requests supabase python-dotenv
 
 ```bash
 # Option A: Using psql (direct database connection)
-psql "postgresql://postgres:password@db.supabase.co:5432/postgres" \
+psql "postgresql://postgres:password@db.lvixtpatqrtuwhygtpjx.supabase.co:5432/postgres" \
   -f SUPABASE_TESTING_SCHEMA.sql
 
 # Option B: Using Supabase Dashboard
-# 1. Go to: https://app.supabase.com/project/[your-project]/sql
+# 1. Go to: https://app.supabase.com/project/lvixtpatqrtuwhygtpjx/sql
 # 2. Copy content of SUPABASE_TESTING_SCHEMA.sql
 # 3. Paste and run
 ```
@@ -81,7 +85,7 @@ Avg Response Time: 245.32ms
 
 ---
 
-## 📦 DETAILED TESTS BREAKDOWN
+## 💾 DETAILED TESTS BREAKDOWN
 
 ### 🔧 INFRASTRUCTURE TESTS (5-10 minutes)
 
@@ -190,7 +194,7 @@ openssl s_client -connect 97v.ru:443 2>/dev/null | \
 
 ```bash
 # Using psql
-psql "postgresql://postgres:password@db.supabase.co:5432/postgres" \
+psql "postgresql://postgres:password@db.lvixtpatqrtuwhygtpjx.supabase.co:5432/postgres" \
   -c "SELECT version();"
 
 # Expected: PostgreSQL 15+ version info
@@ -296,6 +300,7 @@ curl -X POST "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
 
 ```sql
 -- In Supabase SQL editor:
+-- Project: lvixtpatqrtuwhygtpjx (Knowledge_DBnanoAWS)
 SELECT 
   test_name,
   test_category,
@@ -344,10 +349,14 @@ ORDER BY created_at DESC;
 echo $SUPABASE_URL
 echo $SUPABASE_KEY
 
+# ℹ️ Should be:
+# SUPABASE_URL: https://lvixtpatqrtuwhygtpjx.supabase.co
+# SUPABASE_KEY: (your-key-here)
+
 # Verify connection manually
 python3 << 'EOF'
 from supabase import create_client
-db = create_client("YOUR_URL", "YOUR_KEY")
+db = create_client("https://lvixtpatqrtuwhygtpjx.supabase.co", "YOUR_KEY")
 print("Connected!")
 EOF
 ```
@@ -383,11 +392,11 @@ nslookup 97v.ru 1.1.1.1
 
 **Solution:**
 ```bash
-# Re-run schema creation
+# Re-run schema creation (using correct Project ID: lvixtpatqrtuwhygtpjx)
 psql -f SUPABASE_TESTING_SCHEMA.sql
 
 # Or verify table exists
-psql -c "\dt public.test_results"
+psql -c "\\dt public.test_results"
 ```
 
 ---
@@ -410,7 +419,7 @@ psql -c "\dt public.test_results"
 # Run performance test
 python3 run_tests.py --all
 
-# View detailed metrics in Supabase
+# View detailed metrics in Supabase (Project: lvixtpatqrtuwhygtpjx)
 SELECT 
   test_name,
   AVG(response_time_ms) as avg_response_ms,
@@ -467,8 +476,8 @@ ORDER BY date DESC, test_category;
 
 Before running production tests:
 
-- [ ] All credentials set (SUPABASE_URL, SUPABASE_KEY, API_URL)
-- [ ] Testing schema created in Supabase
+- [ ] All credentials set (SUPABASE_URL: https://lvixtpatqrtuwhygtpjx.supabase.co, SUPABASE_KEY, API_URL)
+- [ ] Testing schema created in Supabase (Project: lvixtpatqrtuwhygtpjx)
 - [ ] Dependencies installed (pip install -r requirements.test.txt)
 - [ ] Kubernetes cluster accessible (kubectl working)
 - [ ] DNS resolving correctly (nslookup working)
@@ -477,6 +486,7 @@ Before running production tests:
 - [ ] N8N workflows operational
 - [ ] Perplexity API key valid
 - [ ] Telegram bot token valid
+- [ ] SUPABASE_PROJECTS_CLARITY.md reviewed (for Supabase structure)
 
 ---
 
@@ -508,6 +518,15 @@ kubectl top nodes
 
 ---
 
-**Last Updated:** Dec 8, 2025, 08:00 AM MSK  
-**Next Review:** Dec 9, 2025  
-**Status:** 🟢 READY FOR TESTING  
+## 🔗 KEY REFERENCES
+
+- **📚 Supabase Projects:** [SUPABASE_PROJECTS_CLARITY.md](./SUPABASE_PROJECTS_CLARITY.md) (⭐ Main reference)
+- **🔧 Kubernetes Secrets:** [TASK-PRD-03-UPDATED.md](./TASK-PRD-03-UPDATED.md)
+- **🧪 Full Testing Guide:** [TESTING.md](./TESTING.md)
+- **📈 Test Summary:** [TEST_SUMMARY.md](./TEST_SUMMARY.md)
+
+---
+
+**Last Updated:** Dec 9, 2025, 08:50 AM MSK  
+**Supabase Project:** Knowledge_DBnanoAWS (lvixtpatqrtuwhygtpjx)  
+**Status:** 🟢 READY FOR TESTING
