@@ -1,0 +1,87 @@
+{
+  "name": "Contact Ingest (Secure Forwarder)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "webhook/telegram",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "id": "webhook-trigger",
+      "name": "Telegram Webhook"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://97v.ru/api/v1/contact/ingest",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "contact_name",
+              "value": "={{ $json.message.from.first_name }} {{ $json.message.from.last_name }}"
+            },
+            {
+              "name": "contact_telegram_id",
+              "value": "={{ $json.message.from.id }}"
+            },
+            {
+              "name": "contact_username",
+              "value": "={{ $json.message.from.username }}"
+            },
+            {
+              "name": "message_text",
+              "value": "={{ $json.message.text }}"
+            },
+            {
+              "name": "channel",
+              "value": "telegram"
+            },
+            {
+              "name": "timestamp",
+              "value": "={{ new Date($json.message.date * 1000).toISOString() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        470,
+        300
+      ],
+      "id": "forward-to-brain",
+      "name": "Send to Brain API",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "brain-api-token",
+          "name": "Brain API Token"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send to Brain API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
