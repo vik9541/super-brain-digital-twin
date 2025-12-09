@@ -9,6 +9,9 @@ Usage:
   python3 run_tests.py --api
   python3 run_tests.py --database
   python3 run_tests.py --services
+
+ℹ️ SUPABASE PROJECT: Knowledge_DBnanoAWS (lvixtpatqrtuwhygtpjx) - 97v.ru
+ℹ️ For more info: See SUPABASE_PROJECTS_CLARITY.md
 """
 
 import os
@@ -41,7 +44,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://hbdrmgtcvlwjcecptfxd.supabase.co')
+# ✅ CORRECT Supabase Project: Knowledge_DBnanoAWS (lvixtpatqrtuwhygtpjx)
+SUPABASE_URL = os.getenv('SUPABASE_URL', 'https://lvixtpatqrtuwhygtpjx.supabase.co')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 API_URL = os.getenv('API_URL', 'http://97v.ru')
 API_TOKEN = os.getenv('API_TOKEN')
@@ -109,7 +113,7 @@ class TestSuite:
         try:
             if SUPABASE_URL and SUPABASE_KEY:
                 self.supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-                logger.info("✅ Supabase connected")
+                logger.info("✅ Supabase connected (Project: lvixtpatqrtuwhygtpjx)")
             else:
                 logger.warning("⚠️ Supabase credentials not found")
         except Exception as e:
@@ -353,7 +357,7 @@ class TestSuite:
     # ========================================================================
     
     def test_database_connection(self) -> TestResult:
-        """Test Supabase database connection"""
+        """Test Supabase database connection (Project: lvixtpatqrtuwhygtpjx)"""
         start_time = datetime.now()
         
         try:
@@ -379,7 +383,7 @@ class TestSuite:
                 test_type="Unit",
                 status="passed" if success else "failed",
                 response_time_ms=response_time,
-                test_data={"database": "supabase"},
+                test_data={"database": "supabase", "project_id": "lvixtpatqrtuwhygtpjx"},
                 assertions_passed=1 if success else 0,
                 assertions_total=1,
                 completed_at=datetime.now()
