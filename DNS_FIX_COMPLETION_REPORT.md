@@ -1,9 +1,10 @@
 # ✅ DNS FIX COMPLETION REPORT
 
-**Date:** Dec 8, 2025, 08:49 AM MSK  
+**Date:** Dec 9, 2025, 08:50 AM MSK  
 **Incident:** INC-2025-12-08-001 (API Accessibility)  
 **Status:** 🟢 **RESOLVED - PROPAGATING**  
 **Issue:** #8 (COMPLETED)  
+**ℹ️ Supabase:** See [SUPABASE_PROJECTS_CLARITY.md](./SUPABASE_PROJECTS_CLARITY.md) for correct Project ID (lvixtpatqrtuwhygtpjx)
 
 ---
 
@@ -72,7 +73,7 @@ Verified:   ✅ DigitalOcean dashboard confirms
 
 ---
 
-## 📊 CURRENT STATUS
+## 📈 CURRENT STATUS
 
 ```
 ✅ PROBLEM:     SOLVED
@@ -122,11 +123,11 @@ curl -v http://97v.ru/health
 ### Phase 3: Full Test Suite Resume (45 minutes)
 **Status:** ⏳ **PENDING** (after Phase 2)
 
-Once API is verified accessible:
+Once API is verified accessible, run complete testing (using correct Project ID: lvixtpatqrtuwhygtpjx):
 
 ```bash
-# Run complete testing:
-export SUPABASE_URL="https://hbdrmgtcvlwjcecptfxd.supabase.co"
+# For Supabase details, see: SUPABASE_PROJECTS_CLARITY.md
+export SUPABASE_URL="https://lvixtpatqrtuwhygtpjx.supabase.co"
 export SUPABASE_KEY="your-key"
 python3 run_tests.py --all
 
@@ -166,7 +167,7 @@ python3 run_tests.py --all
 
 ---
 
-## 📝 INFRASTRUCTURE STATUS
+## 📁 INFRASTRUCTURE STATUS
 
 ```
 🟢 Kubernetes Cluster:    100% HEALTHY
@@ -177,11 +178,12 @@ python3 run_tests.py --all
 🟢 DNS A-record:         ✅ 138.197.254.53 (CORRECT)
 🟢 Propagation:          🟢 IN PROGRESS (1-5 min)
 🟢 API External:         ⏳ PENDING (after propagation)
+🟢 Supabase Project:     lvixtpatqrtuwhygtpjx (Knowledge_DBnanoAWS)
 ```
 
 ---
 
-## 🛠️ LESSONS LEARNED
+## 🖣️ LESSONS LEARNED
 
 ### What Worked Well:
 1. ✅ Root cause identified quickly (15 minutes)
@@ -215,7 +217,7 @@ python3 run_tests.py --all
 - [ ] Resume: Issue #7 (TASK-002) testing
 
 ### After Testing Completes (~50 minutes from now):
-- [ ] Verify: All test results in Supabase
+- [ ] Verify: All test results in Supabase (lvixtpatqrtuwhygtpjx)
 - [ ] Check: Health score > 95%
 - [ ] Close: Issue #5 (main incident)
 - [ ] Close: Issue #7 (testing task)
@@ -252,7 +254,8 @@ Status: 🟢 95% Complete - Just waiting for DNS to propagate globally
 ---
 
 **Document Status:** 🟢 **ACTIVE**  
-**Last Updated:** Dec 8, 2025, 08:49 AM MSK  
+**Last Updated:** Dec 9, 2025, 08:50 AM MSK  
+**Supabase Reference:** [SUPABASE_PROJECTS_CLARITY.md](./SUPABASE_PROJECTS_CLARITY.md) (Project ID: lvixtpatqrtuwhygtpjx)  
 **Next Update:** After DNS propagation verified (~09:00 AM MSK)  
 
 **DNS FIX SUCCESSFULLY APPLIED!** 🌟
