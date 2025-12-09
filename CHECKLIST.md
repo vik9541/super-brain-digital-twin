@@ -1,6 +1,8 @@
-# 📚 SUPER BRAIN: Мастер Чек-Лист
+# 📇 SUPER BRAIN: Мастер Чек-Лист
 
-**⚡ ВАЖНО: ВСЕ ЗАДАЧИ ВЕДЕМ ЧЕРЕЗ GITHUB ISSUES И MCP КОННЕКТОР**
+**⚠️ ВАЖНО: ВСЕ ЗАДАЧИ ВЕДЕМ ЧЕРЕЗ GITHUB ISSUES И MCP КОННЕКТОР**
+
+**📄 НОВОЕ: Для вопросов о K8s Secrets и credentials - смотри [DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md](./DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md)**
 
 ---
 
@@ -53,17 +55,24 @@
 - [x] Kubernetes manifests подготовлены
 - [x] HPA autoscaling конфигурирован
 - [x] MASTER_README.md обновлен
+- [x] GitHub Actions workflow исправлен (Issue #36)
 
 ### 🔴 КРИТИЧЕСКИЕ (БЛОКЕРЫ)
 
 **Issue #37: TASK-PRD-03 - Обновление Kubernetes Secrets**
-- Status: ⏳ IN PROGRESS
+- Status: ⏳ READY
 - Требуется обновить production secrets:
   - `supabase-credentials` (URL, API key, JWT secret)
   - `telegram-credentials` (Bot token)
+  - `perplexity-credentials` (API key)
   - `n8n-webhooks` (Webhook URL)
+  - `database-url` (Database connection)
+  - `jwt-secret` (JWT secret)
+  - `api-keys` (Additional keys if needed)
 - 📂 Все детали в GitHub Issue #37
 - 📝 Отчет загружается через MCP коннектор
+- **🔗 [DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md](./DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md) - ПОЛНАЯ ИНСТРУКЦИЯ БЕЗ ВОПРОСОВ!**
+- **🔗 [CREDENTIALS_REFERENCE.md](./CREDENTIALS_REFERENCE.md) - ВСЕ ЗНАЧЕНИЯ В ОДНОМ МЕСТЕ**
 
 **Issue #38: TASK-PRD-04 - Развертывание API и Bot**
 - Status: ⏳ WAITING (зависит от #37)
@@ -182,9 +191,9 @@
 ### По статусам:
 | Статус | Кол-во | Примеры |
 |--------|--------|----------|
-| ✅ DONE | 13 | Infrastructure, Docker, K8s |
+| ✅ DONE | 14 | Infrastructure, Docker, K8s, GitHub Actions |
 | 🔴 BLOCKED | 3 | #37, #38, #39 (production) |
-| 🟡 IN PROGRESS | 2 | Issues #35, #36 |
+| 🟡 IN PROGRESS | 0 | |
 | 📋 READY | 4 | Issues #1-4 (API endpoints) |
 | 📅 PLANNED | 6 | Issues #40-42, #50-52 |
 
@@ -255,19 +264,26 @@ MCP коннектор парсит отчет
 
 ## 🎯 IMMEDIATE ACTIONS (СЛЕДУЮЩИЕ ШАГИ)
 
-### На сегодня (8 декабря):
-- [ ] Завершить TASK-PRD-03 (обновить K8s secrets)
-  - 📂 GitHub Issue #37
-  - 🤖 Отправить отчет через MCP
+### На сегодня (09 декабря):
+- [x] Исправить GitHub Actions workflow
+  - 📂 GitHub Issue #36
+  - ✅ COMPLETED
+  - 🎯 Result: Workflow теперь работает
+
+### На завтра (10 декабря):
+- [ ] Завершить TASK-PRD-03 (обновить K8s secrets) - Issue #37
+  - 🔗 [DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md](./DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md) - ПОЛНАЯ ИНСТРУКЦИЯ
+  - 🔗 [CREDENTIALS_REFERENCE.md](./CREDENTIALS_REFERENCE.md) - ВСЕ ЗНАЧЕНИЯ
   - ⏳ Deadline: 48 часов
+  - 📝 Отправить отчет через MCP
 
 ### На эту неделю:
-- [ ] Выполнить TASK-PRD-04 (deploy API + Bot)
+- [ ] Выполнить TASK-PRD-04 (deploy API + Bot) - Issue #38
   - 📂 GitHub Issue #38
   - 🤖 Отправить отчет через MCP
   - ⏳ Deadline: 48 часов после #37
 
-- [ ] Провести TASK-PRD-05 (production testing)
+- [ ] Провести TASK-PRD-05 (production testing) - Issue #39
   - 📂 GitHub Issue #39
   - 🤖 Отправить отчет через MCP
   - ⏳ Deadline: 72 часов после #38
@@ -308,6 +324,13 @@ MCP коннектор парсит отчет
 - История полная
 - Все видно в Git
 
+### 🆕 Про K8s Secrets и credentials:
+✅ **Все вопросы ответены в новом документе!**
+- 📖 [DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md](./DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md) - ВСЕ ОТВЕТЫ
+- 🔐 [CREDENTIALS_REFERENCE.md](./CREDENTIALS_REFERENCE.md) - ВСЕ ЗНАЧЕНИЯ
+- ❓ Никаких больше вопросов типа "Где взять credentials?"
+- ✅ Полный FAQ с решениями
+
 ---
 
 ## 🔗 ПОЛЕЗНЫЕ ССЫЛКИ
@@ -318,6 +341,7 @@ MCP коннектор парсит отчет
 - 🏢 [DEPARTMENTS/](./DEPARTMENTS/) - Структура команды
 - 🔧 [ARCHITECTURE.md](./ARCHITECTURE.md) - Архитектура системы
 - 📁 [GitHub Issues](https://github.com/vik9541/super-brain-digital-twin/issues) - Все задачи
+- **🆕 [DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md](./DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md) - НОВОЕ! K8s Secrets гайд**
 
 ---
 
@@ -341,8 +365,8 @@ MCP коннектор парсит отчет
 
 ---
 
-**Последнее обновление:** 8 декабря 2025, 19:54 MSK  
-**Версия:** v4.1 (с MCP Коннектором)  
+**Последнее обновление:** 9 декабря 2025, 19:55 MSK  
+**Версия:** v4.2 (добавлены ссылки на DEPLOYMENT_CREDENTIALS_K8S_GUIDE.md)  
 **Статус:** 🟢 ACTIVE (все системы работают)  
 **Коннектор:** ✅ CONFIGURED (автоматизация включена)  
 **GitHub Issues:** 📊 20+ активных задач  
