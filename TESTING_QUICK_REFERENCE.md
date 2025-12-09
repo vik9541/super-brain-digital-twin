@@ -2,12 +2,14 @@
 
 **Print this! Tape to monitor!**
 
+ℹ️ **Supabase Project:** Knowledge_DBnanoAWS (lvixtpatqrtuwhygtpjx) - See [SUPABASE_PROJECTS_CLARITY.md](./SUPABASE_PROJECTS_CLARITY.md)
+
 ---
 
 ## 🚀 ONE-LINER START
 
 ```bash
-export SUPABASE_URL="https://hbdrmgtcvlwjcecptfxd.supabase.co" && \
+export SUPABASE_URL="https://lvixtpatqrtuwhygtpjx.supabase.co" && \
 export SUPABASE_KEY="your-key" && \
 python3 run_tests.py --all
 ```
@@ -32,7 +34,7 @@ SELECT COUNT(*) FROM test_results WHERE created_at > NOW() - INTERVAL '1 hour';
 
 ---
 
-## 📊 4 FILES YOU NEED
+## 📈 4 FILES YOU NEED
 
 | File | Purpose | Size |
 |:-----|:--------|:-----|
@@ -97,7 +99,7 @@ Avg Response Time: 100.20ms
 ## ❌ QUICK TROUBLESHOOTING
 
 | Problem | Command |
-|:--------|:--------|
+|:--------|:---------|
 | **API not responding** | `curl -v http://97v.ru/health` |
 | **DNS broken** | `nslookup 97v.ru 8.8.8.8` |
 | **Pods down** | `kubectl get pods -A` |
@@ -109,7 +111,7 @@ Avg Response Time: 100.20ms
 
 ## 📈 TODAY'S CHECKLIST
 
-- [ ] Set SUPABASE_URL env var
+- [ ] Set SUPABASE_URL env var (https://lvixtpatqrtuwhygtpjx.supabase.co)
 - [ ] Set SUPABASE_KEY env var
 - [ ] Set API_URL = http://97v.ru
 - [ ] Run: `pip install requests supabase`
@@ -144,11 +146,11 @@ response_time_ms > 1000  🛑 Slow alert!
 
 ---
 
-## 🗒️ ENV VARIABLES
+## 📃 ENV VARIABLES
 
 ```bash
 # Set these before running:
-export SUPABASE_URL="https://hbdrmgtcvlwjcecptfxd.supabase.co"
+export SUPABASE_URL="https://lvixtpatqrtuwhygtpjx.supabase.co"
 export SUPABASE_KEY="your-supabase-api-key"
 export API_URL="http://97v.ru"
 export API_TOKEN="optional-bearer-token"
@@ -188,9 +190,10 @@ GROUP BY test_category;
 
 ## 🔗 DIRECT LINKS
 
-- **Supabase Console:** https://app.supabase.com/project/[id]/editor/test_results
+- **Supabase Console:** https://app.supabase.com/project/lvixtpatqrtuwhygtpjx/editor/test_results
 - **API Health:** http://97v.ru/health
 - **GitHub Issue #5:** https://github.com/vik9541/super-brain-digital-twin/issues/5
+- **Supabase Reference:** [SUPABASE_PROJECTS_CLARITY.md](./SUPABASE_PROJECTS_CLARITY.md)
 - **This Repo:** https://github.com/vik9541/super-brain-digital-twin
 
 ---
@@ -241,7 +244,7 @@ dscacheutil -flushcache                  # macOS
 
 ---
 
-## 📝 LOGGING TEMPLATE
+## 📁 LOGGING TEMPLATE
 
 ```bash
 # When you run tests, log it:
@@ -270,7 +273,7 @@ GROUP BY status;
 
 ---
 
-## 🎆 YOU'RE ALL SET!
+## 🌆 YOU'RE ALL SET!
 
 ### Next 5 minutes:
 1. Set env variables ✅
@@ -280,7 +283,7 @@ GROUP BY status;
 5. View results ✅
 
 ### Questions?
-Check [TESTING.md](TESTING.md) or [TEST_EXECUTION_GUIDE.md](TEST_EXECUTION_GUIDE.md)
+Check [TESTING.md](TESTING.md) or [TEST_EXECUTION_GUIDE.md](TEST_EXECUTION_GUIDE.md) or [SUPABASE_PROJECTS_CLARITY.md](./SUPABASE_PROJECTS_CLARITY.md)
 
 ---
 
@@ -289,5 +292,6 @@ Check [TESTING.md](TESTING.md) or [TEST_EXECUTION_GUIDE.md](TEST_EXECUTION_GUIDE
 **Complete suite runtime:** 45 minutes  
 **Files:** 6 (70 KB total)  
 **Test cases:** 25+  
+**Supabase Project:** lvixtpatqrtuwhygtpjx
 
 🚀 **You're ready to test everything!**
