@@ -17,45 +17,44 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-      
+
       - name: Build container image
-            steps:
-      
+        run: docker build -f Dockerfile.api -t registry.digitalocean.com/digital-twin-registry/api:v3.0.0 .
+
       - name: Log in to DigitalOcean Container Registry
         run: doctl registry login --expiry-seconds 1200
-      
+
       - name: Push image to DigitalOcean Container Registry
         run: docker push registry.digitalocean.com/digital-twin-registry/api:v3.0.0
-      
+
       - name: Update deployment file
-        run: TAG=v3.0.0 && sed -i 's|registry.digitalocean.com/digital-twin-registry/api:.*|registry.digitalocean.com/digital-twin-registry/api:'${TAG}'|' k8s/api-deployment.yaml
-      
+        run: TAG=v3.0.0 && sed -i "s|registry.digitalocean.com/digital-twin-registry/api:.*|registry.digitalocean.com/digital-twin-registry/api:${TAG}|" k8s/api-deployment.yaml
+
       - name: Save DigitalOcean kubeconfig with short-lived credentials
         run: doctl kubernetes cluster kubeconfig save --expiry-seconds 1800 super-brain-prod
-      
+
       - name: Deploy to DigitalOcean Kubernetes
         run: kubectl apply -f k8s/api-deployment.yaml
-      
+
       - name: Verify deployment
         run: |
           kubectl rollout status deployment/api -n production
           kubectl get pods -n production -l app=api
           kubectl get svc api -n production
 
-              - name: Diagnostic - show pod status and logs
-      if: always()
-      run: |
-        echo "=== Pod Status ==="
-        kubectl get pods -n production -l app=api
-        echo ""
-        echo "=== Pod Details ==="
-        kubectl describe pods -n production -l app=api | tail -50
-        echo ""
-        echo "=== Pod Logs ==="
-        kubectl logs -n production -l app=api --tail=100 --all-containers=true || echo "No logs available"
-
+      - name: Diagnostic - show pod status and logs
+        if: always()
+        run: |
+          echo "=== Pod Status ==="
+          kubectl get pods -n production -l app=api
+          echo ""
+          echo "=== Pod Details ==="
+          kubectl describe pods -n production -l app=api | tail -50
+          echo ""
+          echo "=== Pod Logs ==="
+          kubectl logs -n production -l app=api --tail=100 --all-containers=true || echo "No logs available"
