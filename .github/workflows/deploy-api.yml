@@ -36,7 +36,7 @@ jobs:
         run: TAG=v3.0.0 && sed -i 's|registry.digitalocean.com/digital-twin-registry/api:.*|registry.digitalocean.com/digital-twin-registry/api:'${TAG}'|' k8s/api-deployment.yaml
       
       - name: Save DigitalOcean kubeconfig with short-lived credentials
-        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 super-brain-prod
+        run: doctl kubernetes cluster kubeconfig save --expiry-seconds 1800 super-brain-prod
       
       - name: Deploy to DigitalOcean Kubernetes
         run: kubectl apply -f k8s/api-deployment.yaml
