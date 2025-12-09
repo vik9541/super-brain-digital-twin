@@ -21,7 +21,7 @@ import logging
 import os
 
 # JWT Authentication
-from api.auth import verify_jwt_token
+from ..auth import verify_jwt_token
 
 # Redis for caching
 import redis.asyncio as redis
