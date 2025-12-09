@@ -24,7 +24,7 @@ jobs:
           token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       
       - name: Build container image
-        run: docker build -f Dockerfile.api -t registry.digitalocean.com/digital-twin-registry/api:v3.0.0 .
+            steps:
       
       - name: Log in to DigitalOcean Container Registry
         run: doctl registry login --expiry-seconds 1200
