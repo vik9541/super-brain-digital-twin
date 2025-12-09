@@ -19,40 +19,65 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     environment: production
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      
+
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DO_API_TOKEN_PROD }}
-      
+
       - name: Log in to DigitalOcean Container Registry
         run: doctl registry login
-      
+
       - name: Build and push API image
         run: |
           docker build -f Dockerfile.api -t ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/api:latest .
           docker push ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/api:latest
-          echo "API_IMAGE_SIZE=$(docker images ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/api:latest --format '{{.Size}}')" >> $GITHUB_ENV
-      
+          echo "API_IMAGE_SIZE=$(docker images ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/api:latest --format '{{.Size}}')"
+
       - name: Build and push Bot image
         run: |
           docker build -f Dockerfile.bot -t ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/bot:latest .
           docker push ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/bot:latest
-          echo "BOT_IMAGE_SIZE=$(docker images ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/bot:latest --format '{{.Size}}')" >> $GITHUB_ENV
-      
+          echo "BOT_IMAGE_SIZE=$(docker images ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/bot:latest --format '{{.Size}}')"
+
       - name: Verify images in registry
         run: |
-          echo "=== Images in DigitalOcean Registry ===\"
-          doctl registry repository list-tags ${{ env.REGISTRY_REPO }}/api
-          doctl registry repository list-tags ${{ env.REGISTRY_REPO }}/bot
-      
+          echo "=== Verifying Images in DigitalOcean Registry ==="
+          
+          # Re-authenticate to registry
+          doctl registry login
+          
+          # List all available repositories
+          echo "\n📁 Available repositories:"
+          doctl registry repository list || echo "WARNING: Could not list repositories"
+          
+          # Verify API image by pulling it
+          echo "\n🔍 Verifying API image..."
+          if docker pull ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/api:latest; then
+            echo "✅ API image verified successfully"
+          else
+            echo "⚠️ WARNING: Could not verify API image pull"
+            exit 1
+          fi
+          
+          # Verify Bot image by pulling it
+          echo "\n🔍 Verifying Bot image..."
+          if docker pull ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/bot:latest; then
+            echo "✅ Bot image verified successfully"
+          else
+            echo "⚠️ WARNING: Could not verify Bot image pull"
+            exit 1
+          fi
+          
+          echo "\n👏 All images verified successfully!"
+
       - name: Summary
         run: |
           echo "### Docker Images Built and Pushed ✅" >> $GITHUB_STEP_SUMMARY
@@ -60,10 +85,9 @@ jobs:
           echo "**Build Date:** $(date -u +'%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "#### Images:" >> $GITHUB_STEP_SUMMARY
-          echo "- API: \`${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/api:latest\` (Size: ${{ env.API_IMAGE_SIZE }})" >> $GITHUB_STEP_SUMMARY
-          echo "- Bot: \`${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/bot:latest\` (Size: ${{ env.BOT_IMAGE_SIZE }})" >> $GITHUB_STEP_SUMMARY
+          echo "- API: \`${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/api:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Bot: \`${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}/bot:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "#### Next Steps:" >> $GITHUB_STEP_SUMMARY
-          echo "1. Update \`k8s/deployments/api-deployment.yaml\` with new image" >> $GITHUB_STEP_SUMMARY
-          echo "2. Update \`k8s/deployments/bot-deployment.yaml\` with new image" >> $GITHUB_STEP_SUMMARY
-          echo "3. Deploy to Kubernetes cluster" >> $GITHUB_STEP_SUMMARY
+          echo "1. Update \`k8s/deployments/api-deployment.yaml\` with new images" >> $GITHUB_STEP_SUMMARY
+          echo "2. Update \`k8s/deployments/bot-deployment.yaml\` with new images" >> $GITHUB_STEP_SUMMARY
