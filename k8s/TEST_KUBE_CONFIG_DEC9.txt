@@ -1,0 +1,9 @@
+# TEST FILE FOR KUBE_CONFIG_PROD VERIFICATION
+
+Created: 2025-12-09 21:25 MSK
+Purpose: Trigger GitHub Actions workflow to test new KUBE_CONFIG_PROD secret
+
+Workflow: Secure Deploy to Kubernetes
+Expected: kubectl cluster-info should work without errors
+
+This file can be deleted after successful verification.
