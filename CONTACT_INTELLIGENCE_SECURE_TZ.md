@@ -1,117 +1,77 @@
-# 🛡️ SECURE CONTACT INTELLIGENCE (SCI) — TECHNICAL SPECIFICATION
-**Version:** 2.0 (Security Enhanced)
-**Status:** DRAFT
-**Author:** Super Brain Architect
+# 🧠 FULL CONTEXT CONTACT INTELLIGENCE — TECHNICAL SPECIFICATION
+**Version:** 2.1 (Full AI Context)
+**Status:** APPROVED
+**Author:** Super Brain Architect & Owner
 
 ---
 
 ## 1. EXECUTIVE SUMMARY
-Модуль для агрегации, анализа и автоматизации общения с контактами (Telegram, WhatsApp, Email).
-**Ключевое отличие v2.0:** Внедрение **Zero-Trust Architecture**. Ни одно сообщение не хранится в открытом виде, ни одно сообщение не уходит в AI без очистки PII. Используется Vector Search для долгосрочной памяти.
+Модуль для агрегации, анализа и автоматизации общения.
+**Ключевое изменение v2.1:** **Full Context Strategy**. Мы отправляем в AI полные данные (имена, телефоны, адреса), чтобы получить максимально точный анализ и контекст.
+**Безопасность:** Мы сохраняем шифрование базы данных (At-Rest Encryption), чтобы защитить архивы от взлома, но канал "Brain -> OpenAI" остается открытым для максимального интеллекта.
 
 ---
 
-## 2. ARCHITECTURE: "THE VAULT"
+## 2. ARCHITECTURE
 
 ```mermaid
 graph TD
-    User[User / Contact] -->|Message| TG[Telegram Webhook]
-    TG -->|Raw Payload| API[FastAPI Gateway]
+    User[Contact Message] -->|Telegram/WhatsApp| n8n[n8n Webhook]
+    n8n -->|Raw Payload| API[FastAPI Service]
     
-    subgraph "Secure Perimeter (K8s)"
-        API -->|1. Validate HMAC| Auth[Security Check]
-        Auth -->|2. PII Sanitization| Mask[PII Masker Service]
-        Mask -->|3. Encrypt| Crypto[AES-256 Engine]
-    end
-    
-    subgraph "Storage Layer (Supabase)"
-        Crypto -->|Encrypted Text| DB[(interactions table)]
-        Mask -->|Vector Embeddings| Vector[(pgvector)]
-    end
-    
-    subgraph "Intelligence Layer"
-        Vector -->|Context Retrieval| RAG[RAG Engine]
-        RAG -->|Sanitized Prompt| LLM[OpenAI GPT-4o]
-        LLM -->|Analysis/Response| API
+    subgraph "Super Brain Core"
+        API -->|1. Encrypt (AES-256)| DB[(Supabase Interactions)]
+        API -->|2. Full Text Analysis| OpenAI[GPT-4o]
+        
+        subgraph "Intelligence Loop"
+            OpenAI -->|Sentiment/Intent| API
+            API -->|Update Profile| Vector[(pgvector)]
+        end
+        
+        Vector -->|Semantic Search| RAG[Context Retrieval]
     end
 ```
 
 ---
 
-## 3. DATA SECURITY PROTOCOLS
+## 3. DATA FLOW
 
-### 3.1. Encryption at Rest (Шифрование)
-Все поля `message_text` и `response_text` в таблице `interactions` хранятся **ТОЛЬКО** в зашифрованном виде.
-- **Algorithm:** AES-256-GCM
-- **Key Management:** Ключ шифрования хранится в Kubernetes Secrets (не в коде, не в БД).
-- **Decryption:** Происходит только "на лету" внутри FastAPI пода при запросе от авторизованного пользователя.
+### 3.1. Ingestion (Вход)
+1. **n8n** получает сообщение.
+2. **n8n** передает JSON на `POST /api/v1/contact/ingest`.
+3. **API**:
+   - Генерирует вектор (embedding) по *полному* тексту.
+   - Шифрует текст для сохранения в поле `message_encrypted` (защита от дампов базы).
+   - Отправляет *полный* текст в GPT-4o для анализа (Sentiment, Urgency, Action Items).
 
-### 3.2. PII Redaction (Очистка данных)
-Перед отправкой текста в OpenAI для анализа или векторизации:
-1. Regex-фильтры находят: Email, Phone, Credit Card, Crypto Address.
-2. NER (Named Entity Recognition) находит: Имена, Локации.
-3. Замена на токены: `[EMAIL_REDACTED]`, `[PHONE_REDACTED]`.
+### 3.2. Intelligence (Анализ)
+AI получает промпт:
+> "Ты — персональный ассистент. Анализируй сообщение от {Name}. Контекст наших отношений: {Relationship_Context}. Выдели задачи, настроение и срочность."
 
----
-
-## 4. INTELLIGENCE FEATURES (BRAIN)
-
-### 4.1. Semantic Memory (RAG)
-Используем расширение `pgvector`.
-- Каждое сообщение превращается в вектор (embedding).
-- При новом сообщении от Никиты, система ищет топ-3 похожих диалога из прошлого (даже годичной давности).
-- **Результат:** Агент отвечает с учетом контекста *всех* лет знакомства.
-
-### 4.2. Style Mimicry (Подражание стилю)
-Система анализирует последние 500 ваших *исходящих* сообщений этому контакту.
-- Вычисляет: среднюю длину, частоту emoji, сленг, время реакции.
-- Генерирует `style_prompt` для GPT, чтобы автоответ был неотличим от вас.
+### 3.3. Response (Ответ)
+Если включен автоответ:
+1. Система ищет в Vector DB похожие диалоги из прошлого.
+2. Система берет `communication_style` этого контакта.
+3. GPT-4o генерирует ответ, используя *реальные факты* (имена, даты) из истории.
 
 ---
 
-## 5. DATABASE SCHEMA (SUPABASE)
+## 4. DATABASE SCHEMA (Updated)
 
-### Extensions required:
-- `pgcrypto` (для хэширования)
-- `vector` (для AI памяти)
-
-### Tables Update:
-
-#### `contacts` (Enhanced)
-- `communication_fingerprint`: JSONB (ML-модель вашего стиля общения с этим человеком)
-- `trust_level`: INT (1-5, влияет на то, что можно отправлять в AI)
-
-#### `interactions` (Secure)
-- `message_encrypted`: TEXT (вместо message_text)
-- `embedding`: VECTOR(1536) (для поиска)
-- `is_sanitized`: BOOLEAN
+Таблицы остаются из v2.0, но поле `is_sanitized` удаляется за ненадобностью.
+Шифрование `message_encrypted` остается обязательным требованием безопасности хранения.
 
 ---
 
-## 6. INTEGRATION WORKFLOWS
+## 5. IMPLEMENTATION PLAN
 
-### 6.1. Secure Ingestion Pipeline (FastAPI + n8n)
-1. **n8n** получает Webhook (Telegram/WhatsApp).
-2. **n8n** НЕ ЛЕЗЕТ в базу сам. Он делает POST запрос на ваш Secure API (`97v.ru/api/v1/ingest`).
-3. **API** проводит санитизацию, шифрование и сохранение.
-4. **API** возвращает в n8n только статус (Success).
-5. **n8n** отправляет уведомление вам (если нужно).
+### Phase 1: Core Service (Week 1)
+- [ ] FastAPI Endpoint для приема сообщений.
+- [ ] AES-256 шифрование для записи в Supabase.
+- [ ] Async OpenAI client для анализа.
 
-*Почему так?* n8n — это публичное облако. Мы не доверяем ему хранение ключей шифрования. Ключи только в вашем K8s.
+### Phase 2: n8n Connection (Week 1)
+- [ ] Simple Forwarder Workflow (Telegram -> API).
 
----
-
-## 7. IMPLEMENTATION PLAN
-
-### Phase 1: The Foundation (Week 1)
-- [ ] Deploy `pgvector` & `pgcrypto` on Supabase.
-- [ ] Update Kubernetes Secrets with `ENCRYPTION_KEY`.
-- [ ] Create FastAPI endpoint `/ingest` with PII scrubber.
-
-### Phase 2: The Memory (Week 2)
-- [ ] Script to migrate & vectorize old Telegram history.
-- [ ] Implement RAG search logic.
-
-### Phase 3: The Automation (Week 3)
-- [ ] Connect n8n webhooks to Secure API.
-- [ ] Activate "Style Mimicry" for Nikita Sokolov.
+### Phase 3: RAG & Vectors (Week 2)
+- [ ] Внедрение поиска по истории.
