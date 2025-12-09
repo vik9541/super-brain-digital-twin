@@ -58,3 +58,4 @@ jobs:
         echo ""
         echo "=== Pod Logs ==="
         kubectl logs -n production -l app=api --tail=100 --all-containers=true || echo "No logs available"
+
