@@ -23,7 +23,7 @@ spec:
     spec:
       containers:
       - name: telegram-bot
-        image: your-registry/digital-twin-bot:v3.0.0
+        image: registry.digitalocean.com/digital-twin-registry/bot:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
