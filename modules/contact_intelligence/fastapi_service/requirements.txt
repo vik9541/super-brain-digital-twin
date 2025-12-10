@@ -18,8 +18,7 @@ aiofiles==23.2.1
 
 # === DATABASE & SUPABASE ===
 supabase==2.9.1
-postgrest==0.18.1
-python-dotenv==1.0.0
+postgrest>=2.24.0python-dotenv==1.0.0
 
 # === ENCRYPTION & SECURITY ===
 cryptography==42.0.0
