@@ -10,6 +10,8 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import Message, ContentType
 import asyncio
+import json
+import datetime
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -28,6 +30,97 @@ UNIVERSAL_WORKFLOW_URL = f"{N8N_WEBHOOK_BASE}/digital-twin-ask"
 
 # Conversation context storage (simplified, should use Redis/Supabase in production)
 conversation_contexts = {}
+
+# ============================================
+# SUPABASE CLIENT FOR RAW DATA STORAGE
+# ============================================
+try:
+    from supabase import create_client, Client
+    SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+    SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+    logger.info(f"📊 Supabase RAW storage: {'✅ Enabled' if supabase else '⚠️ Disabled (env vars missing)'}")
+except ImportError:
+    supabase = None
+    logger.warning("⚠️ Supabase not installed - RAW data storage disabled")
+
+
+async def save_raw_message(message: Message, message_type: str, reply_to_id: int = None):
+    """
+    Save RAW message data to Supabase for later batch analysis
+    """
+    if not supabase:
+        return None
+    
+    try:
+        # Prepare RAW JSON data
+        raw_json = {
+            "message_id": message.message_id,
+            "chat_id": message.chat.id,
+            "user": message.from_user.to_python() if message.from_user else None,
+            "date": message.date.isoformat() if message.date else None,
+            "text": message.text,
+            "caption": message.caption,
+            "reply_to_message_id": message.reply_to_message.message_id if message.reply_to_message else None,
+        }
+        
+        # Extract message text based on type
+        msg_text = ""
+        if message.text:
+            msg_text = message.text
+        elif message.caption:
+            msg_text = message.caption
+        elif message_type == "voice":
+            msg_text = "[Voice message]"
+        elif message_type == "document" and message.document:
+            msg_text = f"[Document: {message.document.file_name}]"
+        elif message_type == "photo":
+            msg_text = "[Photo]"
+        
+        # Insert into raw_messages table
+        result = supabase.table("raw_messages").insert({
+            "user_id": message.from_user.id,
+            "message_id": message.message_id,
+            "chat_id": message.chat.id,
+            "message_text": msg_text,
+            "message_type": message_type,
+            "reply_to_message_id": reply_to_id,
+            "raw_telegram_json": raw_json,
+            "received_at": datetime.datetime.now().isoformat(),
+            "is_processed": False
+        }).execute()
+        
+        # Save file info if present
+        if message.document:
+            supabase.table("raw_files").insert({
+                "message_id": message.message_id,
+                "file_id": message.document.file_id,
+                "file_type": "document",
+                "file_name": message.document.file_name,
+                "file_size": message.document.file_size,
+                "mime_type": message.document.mime_type,
+            }).execute()
+        elif message.voice:
+            supabase.table("raw_files").insert({
+                "message_id": message.message_id,
+                "file_id": message.voice.file_id,
+                "file_type": "voice",
+                "file_size": message.voice.file_size,
+                "mime_type": message.voice.mime_type,
+            }).execute()
+        elif message.photo:
+            photo = message.photo[-1]  # Get largest photo
+            supabase.table("raw_files").insert({
+                "message_id": message.message_id,
+                "file_id": photo.file_id,
+                "file_type": "photo",
+                "file_size": photo.file_size,
+            }).execute()
+        
+        return result.data[0] if result.data else None
+    except Exception as e:
+        logger.error(f"Failed to save RAW message: {e}")
+        return None
 
 async def analyze_message_intent(message_data: dict) -> dict:
     """
@@ -70,6 +163,10 @@ async def handle_universal_message(message: Message):
     elif message.photo:
         message_text = "[Photo received]"
         message_type = "photo"
+
+        # 🆕 RAW DATA STORAGE: Save message for batch analysis
+    reply_to_id = message.reply_to_message.message_id if message.reply_to_message else None
+    await save_raw_message(message, message_type, reply_to_id)
     
     # Get conversation context
     context = conversation_contexts.get(user_id, [])
@@ -116,6 +213,19 @@ async def handle_universal_message(message: Message):
     
     # Send response
     await status_msg.edit_text(answer)
+
+        # 🆕 Save bot response to database
+    if supabase:
+        try:
+            supabase.table("bot_responses").insert({
+                "reply_to_message_id": message.message_id,
+                "response_text": answer,
+                "bot_message_id": status_msg.message_id,
+                "sent_at": datetime.datetime.now().isoformat(),
+                "is_error": False
+            }).execute()
+        except Exception as e:
+            logger.error(f"Failed to save bot response: {e}")
     
     # If AI needs clarification (confidence < 80% or has questions)
     if confidence < 80 and questions:
