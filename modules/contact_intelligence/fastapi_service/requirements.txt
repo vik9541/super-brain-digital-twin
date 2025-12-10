@@ -77,9 +77,3 @@ celery==5.3.4
 #    pip install -r requirements.txt
 #
 # 3. Для spaCy загрузите языковую модель:
-#    python -m spacy download en_core_web_sm
-#    python -m spacy download ru_core_news_sm
-#
-# 4. Для NLTK загрузите данные:
-#    python -c "import nltk; nltk.download('punkt')"
-# ============================================
