@@ -19,6 +19,7 @@ import uuid
 import psutil
 import logging
 import os
+from supabase import create_client, Client
 
 # JWT Authentication
 from ..auth import verify_jwt_token
@@ -56,6 +57,9 @@ logger = logging.getLogger(__name__)
 # Supabase client placeholder
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+
+# Initialize Supabase client
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Rate limiter initialization
 limiter = Limiter(key_func=get_remote_address)
@@ -101,18 +105,27 @@ async def get_analysis(
         GET /api/v1/analysis/550e8400-e29b-41d4-a716-446655440000
     """
     try:
-        # Simulated response (replace with real Supabase query)
+        # Query Supabase for analysis results
+        response = supabase.table('message_chains').select('*').eq('id', analysis_id).execute()
+        
+        # Check if analysis found
+        if not response.data or len(response.data) == 0:
+            raise HTTPException(status_code=404, detail="Analysis not found")
+        
+        # Get first result
+        data = response.data[0]
+        
+        # Map database fields to response model
         analysis = {
-            "id": analysis_id,
-            "status": "completed",
-            "input_text": "Sample analysis text",
-            "analysis_result": {"score": 0.95, "tags": ["important"]},
-            "created_at": datetime.utcnow(),
-            "updated_at": datetime.utcnow(),
+            "id": str(data.get('id', analysis_id)),
+            "status": "completed" if data.get('is_analyzed') else "pending",
+            "input_text": str(data.get('chain_message_ids', [])),
+            "analysis_result": data.get('analysis_result') or {},
+            "created_at": data.get('created_at') or datetime.utcnow(),
+            "updated_at": data.get('updated_at') or datetime.utcnow(),
             "error": None
         }
-        return AnalysisResult(**analysis)
-    except HTTPException:
+        return AnalysisResult(**analysis)pt HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error fetching analysis {analysis_id}: {str(e)}")
