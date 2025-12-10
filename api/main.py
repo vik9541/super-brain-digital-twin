@@ -208,10 +208,29 @@ async def batch_process(request: Request, batch_request: BatchRequest):
     start_time = time.time()
     
     try:
-        tasks = [process_single_item(item) for item in batch_request.items]
-        results = await asyncio.gather(*tasks)
+
+        # Prepare batch data for Supabase insert
+        batch_records = [
+            {**item.data, "id": item.id, "priority": item.priority}
+            for item in batch_request.items
+        ]
         
-        processed = sum(1 for r in results if r.status == "success")
+        # Batch insert into Supabase contact_analysis table
+        response = supabase.table("contact_analysis").insert(batch_records).execute()
+        
+        # Process results
+results = [
+            BatchItemResult(
+                id=record.get("id"),
+                status="success",
+                result={"message": "Inserted successfully"},
+                processing_time_ms=0.0
+            )
+            for record in response.data
+        ] if response.data else []
+        
+        # Handle any items that failed
+        failed = len(batch_request.items) - len(results)        processed = sum(1 for r in results if r.status == "success")
         failed = sum(1 for r in results if r.status == "failed")
         total_time = (time.time() - start_time) * 1000
         
