@@ -34,6 +34,8 @@ spec:
         prometheus.io/path: "/metrics"
     spec:
       serviceAccountName: telegram-bot
+      imagePullSecrets:
+      - name: digital-twin-registry
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
@@ -41,7 +43,7 @@ spec:
       
       containers:
       - name: telegram-bot
-        image: vik9541/super-brain-bot:latest
+        image: registry.digitalocean.com/digital-twin-registry/bot:latest
         imagePullPolicy: Always
         
         # Port configuration
