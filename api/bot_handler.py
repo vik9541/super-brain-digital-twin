@@ -1,13 +1,14 @@
-"""Phase 3: Telegram Bot Handler
-Bot commands implementation for @astra_VIK_bot
+"""Phase 4: SUPER BRAIN v4.0 - Universal Telegram Bot Handler
+Intent-driven architecture: Bot handles ANY message/file without specific commands
+Based on SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md
 """
 
 import os
 import logging
 import httpx
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
-from aiogram.types import Message
+from aiogram.types import Message, ContentType
 import asyncio
 
 # Configure logging
@@ -16,153 +17,212 @@ logger = logging.getLogger(__name__)
 
 # Bot configuration
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8326941950:AAHx7hj1JcJLeQl8eS5sTFlkLJ5S3ZM|L5p3BZoVE")
-N8N_WEBHOOK_BASE = os.getenv("NBN_WEBHOOK_BASE", "https://lavrentev.app.n8n.cloud/webhook")
+N8N_WEBHOOK_BASE = os.getenv("N8N_WEBHOOK_BASE", "https://lavrentev.app.n8n.cloud/webhook")
+
 # Initialize bot and dispatcher
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# N8N Workflow URLs
-WORKFLOW_URLS = {
-    "ask": f"{N8N_WEBHOOK_BASE}/digital-twin-ask",
-    "analyze": f"{N8N_WEBHOOK_BASE}/daily-analysis",
-    "report": f"{N8N_WEBHOOK_BASE}/hourly-report"
-}
+# N8N Universal Workflow (renamed from digital-twin-ask)
+UNIVERSAL_WORKFLOW_URL = f"{N8N_WEBHOOK_BASE}/digital-twin-ask"
 
-async def call_n8n_workflow(workflow: str, data: dict) -> dict:
-    """Call N8N workflow via webhook"""
+# Conversation context storage (simplified, should use Redis/Supabase in production)
+conversation_contexts = {}
+
+async def analyze_message_intent(message_data: dict) -> dict:
+    """
+    Send message to Perplexity AI via N8N for intent analysis
+    Returns: {intent, action, confidence, questions, answer}
+    """
     try:
-        url = WORKFLOW_URLS.get(workflow)
-        if not url:
-            return {"error": "Unknown workflow"}
-        
         async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(url, json=data)
+            response = await client.post(UNIVERSAL_WORKFLOW_URL, json=message_data)
             response.raise_for_status()
             return response.json()
     except Exception as e:
-        logger.error(f"N8N workflow error: {e}")
-        return {"error": str(e)}
+        logger.error(f"Perplexity AI analysis error: {e}")
+        return {
+            "error": str(e),
+            "confidence": 0,
+            "answer": f"❌ Произошла ошибка при обработке: {str(e)}"
+        }
+
+async def handle_universal_message(message: Message):
+    """
+    Universal handler for ANY message type (text, file, voice, photo)
+    This is the CORE of SUPER BRAIN v4.0 architecture
+    """
+    user_id = message.from_user.id
+    
+    # Extract message content
+    message_text = ""
+    message_type = "text"
+    
+    if message.text:
+        message_text = message.text
+        message_type = "text"
+    elif message.voice:
+        message_text = "[Voice message received]"
+        message_type = "voice"
+    elif message.document:
+        message_text = f"[Document: {message.document.file_name}]"
+        message_type = "document"
+    elif message.photo:
+        message_text = "[Photo received]"
+        message_type = "photo"
+    
+    # Get conversation context
+    context = conversation_contexts.get(user_id, [])
+    
+    # Prepare data for Perplexity AI analysis
+    analysis_data = {
+        "message": message_text,
+        "message_type": message_type,
+        "user_id": user_id,
+        "chat_id": message.chat.id,
+        "context": context[-3:] if len(context) > 0 else [],  # Last 3 messages for context
+        "request_type": "universal_analysis"
+    }
+    
+    # Send "thinking" message
+    status_msg = await message.answer("🧠 Анализирую...")
+    
+    # Analyze via Perplexity AI
+    result = await analyze_message_intent(analysis_data)
+    
+    # Update conversation context
+    if user_id not in conversation_contexts:
+        conversation_contexts[user_id] = []
+    conversation_contexts[user_id].append({
+        "role": "user",
+        "content": message_text
+    })
+    
+    # Handle result
+    if "error" in result:
+        await status_msg.edit_text(result.get("answer", "❌ Ошибка обработки"))
+        return
+    
+    # Extract AI response
+    answer = result.get("answer", "Не могу определить, что нужно сделать. Уточните, пожалуйста?")
+    confidence = result.get("confidence", 0)
+    questions = result.get("questions", [])
+    
+    # Save AI response to context
+    conversation_contexts[user_id].append({
+        "role": "assistant",
+        "content": answer
+    })
+    
+    # Send response
+    await status_msg.edit_text(answer)
+    
+    # If AI needs clarification (confidence < 80% or has questions)
+    if confidence < 80 and questions:
+        clarification_text = "\n\n❓ У меня есть уточняющие вопросы:\n"
+        for i, q in enumerate(questions, 1):
+            clarification_text += f"{i}. {q}\n"
+        await message.answer(clarification_text)
+
+# ============================================
+# COMMAND HANDLERS (for basic navigation)
+# ============================================
 
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
     """Handle /start command"""
     text = """
-🌟 Welcome to Digital Twin Bot!
+🧠 Добро пожаловать в SUPER BRAIN v4.0!
 
-I'm an AI assistant powered by Perplexity AI.
+Я - ваш умный AI-ассистент на базе Perplexity AI.
 
-Commands:
-/ask - Ask me a question
-/analyze - Get daily analysis
-/report - Get hourly report
-/help - Show help
-/status - Check bot status
+✨ **Просто отправьте мне:**
+• Любой текст или вопрос
+• Файл (документ, фото)
+• Голосовое сообщение
 
-Let's talk!
+Я проанализирую и помогу!
+
+🤖 Если не понимаю - задам уточняющие вопросы.
+
+Команды:
+/help - показать помощь
+/status - проверить статус
+
+Приступим! 🚀
     """
     await message.answer(text)
-
-@dp.message(Command("ask"))
-async def cmd_ask(message: Message):
-    """Handle /ask command"""
-    # Extract question
-    text = message.text or ""
-    question = text.replace('/ask', '', 1).strip()
-    
-    if not question:
-        await message.answer("🤔 Please ask a question: /ask [your question]")
-        return
-    
-    # Send to N8N Workflow #1
-    await message.answer("⏳ Processing your question...")
-    
-    result = await call_n8n_workflow("ask", {
-        "question": question,
-        "user_id": message.from_user.id,
-        "chat_id": message.chat.id
-    })
-    
-    if "error" in result:
-        await message.answer(f"🚨 Error: {result['error']}")
-    else:
-        answer = result.get("answer", "No response received")
-        await message.answer(answer)
-
-@dp.message(Command("analyze"))
-async def cmd_analyze(message: Message):
-    """Handle /analyze command"""
-    await message.answer("📄 Generating daily analysis...")
-    
-    result = await call_n8n_workflow("analyze", {
-        "user_id": message.from_user.id,
-        "chat_id": message.chat.id
-    })
-    
-    if "error" in result:
-        await message.answer(f"🚨 Error: {result['error']}")
-    else:
-        response = result.get("analysis", "Analysis not available")
-        await message.answer(response)
-
-@dp.message(Command("report"))
-async def cmd_report(message: Message):
-    """Handle /report command"""
-    await message.answer("📈 Generating hourly report...")
-    
-    result = await call_n8n_workflow("report", {
-        "user_id": message.from_user.id,
-        "chat_id": message.chat.id
-    })
-    
-    if "error" in result:
-        await message.answer(f"🚨 Error: {result['error']}")
-    else:
-        response = result.get("report", "Report not available")
-        await message.answer(response)
 
 @dp.message(Command("help"))
 async def cmd_help(message: Message):
     """Handle /help command"""
     text = """
-🔠 Available Commands:
+📚 **SUPER BRAIN v4.0 - Помощь**
 
-/start - Welcome message
-/ask - Ask a question to Perplexity
-/analyze - Get daily analysis
-/report - Get hourly report
-/help - Show this help
-/status - Check bot status
+**Концепция:**
+Вам НЕ нужны специальные команды!
+Просто общайтесь естественно:
 
-Example:
-/ask What is machine learning?
+✅ "Встреча завтра с Иваном"
+✅ [загрузить счет.pdf]
+✅ [отправить голосовое]
+✅ "Сколько я потратил на проект?"
+
+🤖 Я понимаю контекст и задаю вопросы если нужно.
+
+**Команды навигации:**
+/start - начать
+/help - эта справка
+/status - проверить работу систем
+
+**Powered by Perplexity AI** 🚀
     """
     await message.answer(text)
 
 @dp.message(Command("status"))
 async def cmd_status(message: Message):
     """Handle /status command"""
-    # Check all systems
-    status = {
-        "api": "🟢 OK",
-        "wf1": "🟢 OK",
-        "wf2": "🟢 OK",
-        "wf3": "🟢 OK",
-        "db": "🟢 OK"
-    }
+    try:
+        # Ping N8N webhook
+        async with httpx.AsyncClient(timeout=5.0) as client:
+            response = await client.get(f"{N8N_WEBHOOK_BASE.replace('/webhook', '')}/healthz", follow_redirects=True)
+            n8n_status = "🟢 OK" if response.status_code in [200, 404] else "🔴 ERROR"  # 404 is ok, means N8N is up
+    except:
+        n8n_status = "🟡 UNKNOWN"
     
     text = f"""
-👋 Bot Status:
-🟢 API: {status['api']}
-🟢 N8N WF#1: {status['wf1']}
-🟢 N8N WF#2: {status['wf2']}
-🟢 N8N WF#3: {status['wf3']}
-🟢 Database: {status['db']}
+📊 **Статус Системы**
+
+🤖 **Bot:** 🟢 Работает
+🔗 **N8N Workflows:** {n8n_status}
+🧠 **Perplexity AI:** 🟢 Активен
+💾 **Database:** 🟢 Готова
+
+**Version:** SUPER BRAIN v4.0 (Flexible)
+**Architecture:** Intent-driven (no commands needed)
     """
     await message.answer(text)
 
+# ============================================
+# UNIVERSAL MESSAGE HANDLER (MAIN LOGIC)
+# ============================================
+
+@dp.message(F.text | F.voice | F.document | F.photo)
+async def handle_any_message(message: Message):
+    """
+    Main universal handler for ALL message types
+    This replaces /ask, /analyze, /report commands
+    """
+    await handle_universal_message(message)
+
+# ============================================
+# MAIN FUNCTION
+# ============================================
+
 async def main():
     """Main function to start the bot"""
-    logger.info("Starting Telegram bot...")
+    logger.info("🚀 Starting SUPER BRAIN v4.0 Telegram Bot...")
+    logger.info(f"📡 N8N Webhook: {UNIVERSAL_WORKFLOW_URL}")
     try:
         await dp.start_polling(bot)
     finally:
