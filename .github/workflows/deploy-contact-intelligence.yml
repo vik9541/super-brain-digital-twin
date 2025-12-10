@@ -33,7 +33,8 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-      images: ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}          tags: |
+          images: ${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}
+          tags: |
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
@@ -59,7 +60,8 @@ jobs:
         run: |
           # Update image in deployment
           kubectl set image deployment/contact-ai-service \
-        contact-ai=${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest \            -n default
+            contact-ai=${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest \
+            -n default
           
           # Wait for rollout
           kubectl rollout status deployment/contact-ai-service -n default
