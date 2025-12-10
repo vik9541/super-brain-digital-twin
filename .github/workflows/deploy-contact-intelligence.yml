@@ -58,12 +58,10 @@ jobs:
 
       - name: Update Kubernetes deployment
         run: |
-          # Update image in deployment
           kubectl set image deployment/contact-ai-service \
             contact-ai=${{ env.REGISTRY }}/${{ secrets.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:latest \
             -n default
           
-          # Wait for rollout
           kubectl rollout status deployment/contact-ai-service -n default
 
       - name: Verify deployment
