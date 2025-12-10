@@ -5,7 +5,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: digital-twin-bot
-  namespace: default
+  namespace: super-brain
   labels:
     app: digital-twin-bot
     component: telegram-bot
@@ -32,7 +32,7 @@ spec:
         - name: TELEGRAM_BOT_TOKEN
           valueFrom:
             secretKeyRef:
-              name: telegram-bot-secrets
+              name: telegram-credentials
               key: bot-token
         - name: N8N_WEBHOOK_BASE
           value: "https://lavrentev.app.n8n.cloud/webhook"
@@ -62,7 +62,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: digital-twin-bot-service
-  namespace: default
+  namespace: super-brain
 spec:
   selector:
     app: digital-twin-bot
