@@ -125,7 +125,8 @@ async def get_analysis(
             "updated_at": data.get('updated_at') or datetime.utcnow(),
             "error": None
         }
-        return AnalysisResult(**analysis)pt HTTPException:
+                return AnalysisResult(**analysis)
+    except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error fetching analysis {analysis_id}: {str(e)}")
