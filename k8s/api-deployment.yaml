@@ -35,11 +35,13 @@ spec:
           valueFrom:
             secretKeyRef:
               name: digital-twin-secrets
-                        key: SUPABASE_URL        - name: SUPABASE_KEY
+              key: SUPABASE_URL
+        - name: SUPABASE_KEY
           valueFrom:
             secretKeyRef:
               name: digital-twin-secrets
-                        key: SUPABASE_KEY        - name: PORT
+              key: SUPABASE_KEY
+        - name: PORT
           value: "8000"
         resources:
           requests:
