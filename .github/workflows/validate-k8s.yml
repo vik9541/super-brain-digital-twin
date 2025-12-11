@@ -1,3 +1,32 @@
+name: Validate YAML syntax
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'k8s/**'
+      - '.github/workflows/validate-k8s.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'k8s/**'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
       - name: Validate YAML syntax
         run: |
           echo "=== Checking YAML Syntax ==="
