@@ -33,7 +33,7 @@ jobs:
       - name: Validate YAML syntax
         run: |
           echo "=== Checking YAML Syntax ==="
-          for file in k8s/*.yaml k8s/*.yml 2>/dev/null; do
+          for file in k8s/*.yaml k8s/*.yml; do
             [ -f "$file" ] || continue
             echo "Validating: $file"
             python3 -c "import yaml; yaml.safe_load(open('$file'))" && echo "✅ Valid" || exit 1
