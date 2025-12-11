@@ -18,11 +18,12 @@ aiofiles==23.2.1
 
 # === DATABASE & SUPABASE ===
 supabase==2.9.1
-postgrest>=2.24.0
+postgrest>=0.17.1
 python-dotenv==1.0.0
 
 # === ENCRYPTION & SECURITY ===
-cryptography==42.0.0
+cryptogr21
+aphy==42.0.0
 pycryptodome==3.19.1
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
