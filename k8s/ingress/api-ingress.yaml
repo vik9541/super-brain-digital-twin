@@ -24,55 +24,48 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-    
-    # Security headers
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_set_headers "X-Content-Type-Options: nosniff";
-      more_set_headers "X-Frame-Options: DENY";
-      more_set_headers "X-XSS-Protection: 1; mode=block";
-      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
-    
+
 spec:
   tls:
-  - hosts:
-    - 97v.ru
-    - www.97v.ru
-    - api.97v.ru
-    secretName: super-brain-tls-cert
+    - hosts:
+        - 97v.ru
+        - www.97v.ru
+        - api.97v.ru
+      secretName: super-brain-tls-cert
   
   rules:
-  # Main domain: 97v.ru
-  - host: 97v.ru
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: api
-            port:
-              number: 8000
-  
-  # WWW subdomain: www.97v.ru
-  - host: www.97v.ru
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: api
-            port:
-              number: 8000
-  
-  # API subdomain: api.97v.ru
-  - host: api.97v.ru
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: api
-            port:
-              number: 8000
+    # Main domain: 97v.ru
+    - host: 97v.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8000
+    
+    # WWW subdomain: www.97v.ru
+    - host: www.97v.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8000
+    
+    # API subdomain: api.97v.ru
+    - host: api.97v.ru
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api
+                port:
+                  number: 8000

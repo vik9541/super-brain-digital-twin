@@ -6,7 +6,7 @@
 # ============================================
 
 # === STAGE 1: Builder ===
-FROM python:3.11-slim as builder
+FROM python:3.12-slim as builder
 
 LABEL maintainer="Super Brain Team"
 LABEL description="Contact Intelligence Service - Builder Stage"
@@ -40,7 +40,7 @@ RUN python -m spacy download en_core_web_sm && \
     python -m spacy download ru_core_news_sm
 
 # === STAGE 2: Runtime ===
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 LABEL maintainer="Super Brain Team"
 LABEL version="1.0.0"

@@ -1,17 +1,21 @@
 """Phase 4: SUPER BRAIN v4.0 - Universal Telegram Bot Handler
 Intent-driven architecture: Bot handles ANY message/file without specific commands
 Based on SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md
+
+🆕 FIX: Added photo/document processing with Base64 encoding for Perplexity AI
 """
 
 import os
 import logging
 import httpx
+import base64
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
 from aiogram.types import Message, ContentType
 import asyncio
 import json
 import datetime
+from io import BytesIO
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -45,6 +49,32 @@ except ImportError:
     logger.warning("⚠️ Supabase not installed - RAW data storage disabled")
 
 
+async def download_file_as_base64(file_id: str, file_type: str = "photo") -> str:
+    """
+    Download file from Telegram and convert to Base64 for Perplexity AI
+    """
+    try:
+        # Get file info from Telegram
+        file = await bot.get_file(file_id)
+        file_path = file.file_path
+        
+        # Download file
+        file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+        async with httpx.AsyncClient() as client:
+            response = await client.get(file_url)
+            response.raise_for_status()
+            
+            # Convert to Base64
+            file_bytes = response.content
+            base64_data = base64.b64encode(file_bytes).decode('utf-8')
+            
+            logger.info(f"✅ Downloaded {file_type}: {len(file_bytes)} bytes -> {len(base64_data)} base64 chars")
+            return base64_data
+    except Exception as e:
+        logger.error(f"❌ Failed to download file {file_id}: {e}")
+        return None
+
+
 async def save_raw_message(message: Message, message_type: str, reply_to_id: int = None):
     """
     Save RAW message data to Supabase for later batch analysis
@@ -75,7 +105,8 @@ async def save_raw_message(message: Message, message_type: str, reply_to_id: int
         elif message_type == "document" and message.document:
             msg_text = f"[Document: {message.document.file_name}]"
         elif message_type == "photo":
-            msg_text = "[Photo]"
+            # 🆕 Include caption with photo
+            msg_text = message.caption if message.caption else "[Photo]"
         
         # Insert into raw_messages table
         result = supabase.table("raw_messages").insert({
@@ -128,10 +159,27 @@ async def analyze_message_intent(message_data: dict) -> dict:
     Returns: {intent, action, confidence, questions, answer}
     """
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:  # 🆕 Increased timeout for image processing
             response = await client.post(UNIVERSAL_WORKFLOW_URL, json=message_data)
             response.raise_for_status()
-            return response.json()
+            
+            # 🆕 Handle empty or non-JSON responses
+            if not response.content:
+                return {
+                    "error": "Empty response from N8N",
+                    "confidence": 0,
+                    "answer": "❌ Получен пустой ответ от сервера"
+                }
+            
+            try:
+                return response.json()
+            except json.JSONDecodeError as json_err:
+                logger.error(f"JSON decode error: {json_err}. Response content: {response.text[:500]}")
+                return {
+                    "error": f"Invalid JSON: {str(json_err)}",
+                    "confidence": 0,
+                    "answer": f"❌ Ошибка обработки: {response.text[:200]}"
+                }
     except Exception as e:
         logger.error(f"Perplexity AI analysis error: {e}")
         return {
@@ -140,16 +188,20 @@ async def analyze_message_intent(message_data: dict) -> dict:
             "answer": f"❌ Произошла ошибка при обработке: {str(e)}"
         }
 
+
 async def handle_universal_message(message: Message):
     """
     Universal handler for ANY message type (text, file, voice, photo)
     This is the CORE of SUPER BRAIN v4.0 architecture
+    
+    🆕 FIXED: Now properly handles photos with Base64 encoding
     """
     user_id = message.from_user.id
     
     # Extract message content
     message_text = ""
     message_type = "text"
+    file_data = None
     
     if message.text:
         message_text = message.text
@@ -157,14 +209,26 @@ async def handle_universal_message(message: Message):
     elif message.voice:
         message_text = "[Voice message received]"
         message_type = "voice"
+        # 🆕 Download voice file
+        file_data = await download_file_as_base64(message.voice.file_id, "voice")
     elif message.document:
         message_text = f"[Document: {message.document.file_name}]"
         message_type = "document"
+        # 🆕 Download document file
+        file_data = await download_file_as_base64(message.document.file_id, "document")
     elif message.photo:
-        message_text = "[Photo received]"
+        # 🆕 CRITICAL FIX: Process photo with caption
+        photo = message.photo[-1]  # Get highest resolution
+        message_text = message.caption if message.caption else "[Photo received - please analyze what you see in this image]"
         message_type = "photo"
-
-        # 🆕 RAW DATA STORAGE: Save message for batch analysis
+        # 🆕 Download and encode photo
+        file_data = await download_file_as_base64(photo.file_id, "photo")
+        
+        if not file_data:
+            await message.answer("❌ Не удалось загрузить фото. Попробуйте еще раз.")
+            return
+    
+    # 🆕 RAW DATA STORAGE: Save message for batch analysis
     reply_to_id = message.reply_to_message.message_id if message.reply_to_message else None
     await save_raw_message(message, message_type, reply_to_id)
     
@@ -180,6 +244,12 @@ async def handle_universal_message(message: Message):
         "context": context[-3:] if len(context) > 0 else [],  # Last 3 messages for context
         "request_type": "universal_analysis"
     }
+    
+    # 🆕 Add file data if present (Base64 encoded)
+    if file_data:
+        analysis_data["file_base64"] = file_data
+        analysis_data["has_file"] = True
+        logger.info(f"📎 Sending {message_type} with file_base64 ({len(file_data)} chars) to Perplexity AI")
     
     # Send "thinking" message
     status_msg = await message.answer("🧠 Анализирую...")
@@ -213,8 +283,8 @@ async def handle_universal_message(message: Message):
     
     # Send response
     await status_msg.edit_text(answer)
-
-        # 🆕 Save bot response to database
+    
+    # 🆕 Save bot response to database
     if supabase:
         try:
             supabase.table("bot_responses").insert({
@@ -234,6 +304,7 @@ async def handle_universal_message(message: Message):
             clarification_text += f"{i}. {q}\n"
         await message.answer(clarification_text)
 
+
 # ============================================
 # COMMAND HANDLERS (for basic navigation)
 # ============================================
@@ -251,7 +322,9 @@ async def cmd_start(message: Message):
 • Файл (документ, фото)
 • Голосовое сообщение
 
-Я проанализирую и помогу!
+🖼️ **🆕 Теперь я могу анализировать фотографии!**
+Отправьте фото + текст, например:
+"на фото, я получающий диплом"
 
 🤖 Если не понимаю - задам уточняющие вопросы.
 
@@ -262,6 +335,7 @@ async def cmd_start(message: Message):
 Приступим! 🚀
     """
     await message.answer(text)
+
 
 @dp.message(Command("help"))
 async def cmd_help(message: Message):
@@ -276,6 +350,7 @@ async def cmd_help(message: Message):
 ✅ "Встреча завтра с Иваном"
 ✅ [загрузить счет.pdf]
 ✅ [отправить голосовое]
+✅ [отправить фото + "на фото..."] 🆕
 ✅ "Сколько я потратил на проект?"
 
 🤖 Я понимаю контекст и задаю вопросы если нужно.
@@ -289,6 +364,7 @@ async def cmd_help(message: Message):
     """
     await message.answer(text)
 
+
 @dp.message(Command("status"))
 async def cmd_status(message: Message):
     """Handle /status command"""
@@ -300,18 +376,23 @@ async def cmd_status(message: Message):
     except:
         n8n_status = "🟡 UNKNOWN"
     
+    supabase_status = "🟢 Connected" if supabase else "🟡 Disabled"
+    
     text = f"""
 📊 **Статус Системы**
 
 🤖 **Bot:** 🟢 Работает
 🔗 **N8N Workflows:** {n8n_status}
 🧠 **Perplexity AI:** 🟢 Активен
-💾 **Database:** 🟢 Готова
+💾 **Database:** {supabase_status}
+🖼️ **🆕 Photo Analysis:** 🟢 Включен
 
 **Version:** SUPER BRAIN v4.0 (Flexible)
 **Architecture:** Intent-driven (no commands needed)
+**🆕 Fixed:** Photo/Document processing with Base64
     """
     await message.answer(text)
+
 
 # ============================================
 # UNIVERSAL MESSAGE HANDLER (MAIN LOGIC)
@@ -322,8 +403,11 @@ async def handle_any_message(message: Message):
     """
     Main universal handler for ALL message types
     This replaces /ask, /analyze, /report commands
+    
+    🆕 Now with proper photo/document processing!
     """
     await handle_universal_message(message)
+
 
 # ============================================
 # MAIN FUNCTION
@@ -333,10 +417,13 @@ async def main():
     """Main function to start the bot"""
     logger.info("🚀 Starting SUPER BRAIN v4.0 Telegram Bot...")
     logger.info(f"📡 N8N Webhook: {UNIVERSAL_WORKFLOW_URL}")
+    logger.info("🆕 Photo/Document processing: ENABLED")
+    
     try:
         await dp.start_polling(bot)
     finally:
         await bot.session.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
