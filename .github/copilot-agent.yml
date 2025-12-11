@@ -1,0 +1,345 @@
+# GitHub Copilot Agent Configuration
+# Super Brain Digital Twin - Automated Code Auditor
+# Version: 1.0.0 | Created: 2025-12-11
+
+name: SuperBrain-CodeAuditor
+description: Автоматический аудитор кода для проекта Super Brain Digital Twin
+
+# Модели для анализа
+models:
+  primary:
+    name: gpt-5.1-codex-max
+    purpose: Основной анализ кода, архитектуры и безопасности
+    temperature: 0.2  # Низкая температура для точности
+    
+  secondary:
+    name: claude-opus-4.5
+    purpose: Глубокий анализ Python логики и рефакторинг
+    temperature: 0.3
+    
+  infrastructure:
+    name: claude-comer-4.5
+    purpose: Kubernetes, Docker, YAML конфигурации
+    temperature: 0.2
+
+# Триггеры запуска
+triggers:
+  - event: push
+    branches:
+      - main
+      - develop
+      - 'feature/**'
+    paths:
+      - '**.py'
+      - '**.yaml'
+      - '**.yml'
+      - 'Dockerfile*'
+      - 'k8s/**'
+      - 'requirements*.txt'
+      
+  - event: pull_request
+    actions:
+      - opened
+      - synchronize
+      - reopened
+      
+  - event: schedule
+    cron: '0 2 * * *'  # Каждый день в 2:00 UTC (5:00 MSK)
+    
+  - event: workflow_dispatch  # Ручной запуск
+
+# Области проверки
+scan_targets:
+  python_code:
+    paths:
+      - 'api/**/*.py'
+      - 'modules/**/*.py'
+      - '*.py'
+      - 'tests/**/*.py'
+    checks:
+      - type_hints
+      - error_handling
+      - security_vulnerabilities
+      - code_smells
+      - performance
+      - test_coverage
+      - docstrings
+      - imports_optimization
+      
+  kubernetes:
+    paths:
+      - 'k8s/**/*.yaml'
+      - 'k8s/**/*.yml'
+    checks:
+      - resource_limits
+      - security_context
+      - health_probes
+      - image_versions
+      - rbac_config
+      - network_policies
+      - secrets_management
+      
+  docker:
+    paths:
+      - 'Dockerfile*'
+    checks:
+      - layer_optimization
+      - security_best_practices
+      - non_root_user
+      - image_size
+      - multistage_builds
+      - vulnerabilities
+      
+  documentation:
+    paths:
+      - '**/*.md'
+    checks:
+      - broken_links
+      - outdated_content
+      - consistency
+      - code_examples_validity
+
+# Правила проверки
+rules:
+  # Python
+  - id: PY001
+    severity: error
+    category: type_safety
+    message: "Все функции должны иметь type hints"
+    auto_fix: true
+    
+  - id: PY002
+    severity: error
+    category: security
+    message: "Обнаружены hardcoded secrets или credentials"
+    auto_fix: false  # Требует ручной проверки
+    
+  - id: PY003
+    severity: warning
+    category: error_handling
+    message: "Блок try-except слишком широкий, уточните исключения"
+    auto_fix: false
+    
+  - id: PY004
+    severity: error
+    category: security
+    message: "Возможная SQL injection уязвимость"
+    auto_fix: false
+    
+  - id: PY005
+    severity: warning
+    category: performance
+    message: "Обнаружен потенциальный N+1 запрос"
+    auto_fix: false
+    
+  - id: PY006
+    severity: info
+    category: documentation
+    message: "Отсутствует docstring для публичной функции"
+    auto_fix: true
+    
+  - id: PY007
+    severity: warning
+    category: code_quality
+    message: "Функция слишком сложная (cyclomatic complexity > 10)"
+    auto_fix: false
+    
+  - id: PY008
+    severity: info
+    category: imports
+    message: "Неиспользуемый импорт"
+    auto_fix: true
+    
+  # Kubernetes
+  - id: K8S001
+    severity: error
+    category: resources
+    message: "Отсутствуют resource limits/requests"
+    auto_fix: true
+    fix_template: |
+      resources:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "256Mi"
+          cpu: "200m"
+    
+  - id: K8S002
+    severity: error
+    category: security
+    message: "Security context не настроен (runAsNonRoot, readOnlyRootFilesystem)"
+    auto_fix: true
+    
+  - id: K8S003
+    severity: warning
+    category: health
+    message: "Отсутствуют liveness и readiness probes"
+    auto_fix: true
+    
+  - id: K8S004
+    severity: error
+    category: versioning
+    message: "Используется тег 'latest' для Docker образа"
+    auto_fix: false
+    
+  - id: K8S005
+    severity: warning
+    category: security
+    message: "Секреты должны храниться в Kubernetes Secrets, а не в ConfigMap"
+    auto_fix: false
+    
+  # Docker
+  - id: DOC001
+    severity: warning
+    category: optimization
+    message: "Используйте multi-stage builds для уменьшения размера образа"
+    auto_fix: false
+    
+  - id: DOC002
+    severity: error
+    category: security
+    message: "Контейнер запускается от root пользователя"
+    auto_fix: true
+    fix_template: |
+      RUN adduser -D -u 1000 appuser
+      USER appuser
+    
+  - id: DOC003
+    severity: info
+    category: optimization
+    message: "Неоптимальный порядок COPY команд, кэш может не работать"
+    auto_fix: true
+
+# Автоматические исправления
+auto_fix:
+  enabled: true
+  confidence_threshold: 0.85  # Применять auto-fix только если уверенность >= 85%
+  
+  # Что можно автоматически исправлять
+  allowed_categories:
+    - type_safety
+    - code_formatting
+    - imports
+    - documentation
+    - simple_refactoring
+    
+  # Что НЕЛЬЗЯ автоматически исправлять (требует review)
+  forbidden_categories:
+    - security
+    - architecture
+    - business_logic
+    - breaking_changes
+    
+  # Создавать отдельный коммит для auto-fix
+  create_commit: true
+  commit_message: "🤖 Auto-fix: {rule_id} - {message}"
+  
+  # Создавать PR для review при критических изменениях
+  create_pull_request: true
+  pr_title: "🤖 [CodeAuditor] Автоматические исправления"
+  pr_labels:
+    - auto-fix
+    - code-quality
+    - needs-review
+
+# Отчетность
+reporting:
+  # Создавать issue для каждой критической проблемы
+  create_issues:
+    enabled: true
+    severity_threshold: error  # Создавать issue только для error
+    labels:
+      - bug
+      - code-quality
+      - needs-attention
+    assignees:
+      - vik9541
+    
+  # Комментарии в PR
+  pr_comments:
+    enabled: true
+    style: grouped  # grouped | inline
+    collapse_minor: true  # Сворачивать незначительные замечания
+    
+  # Статус проверки
+  status_check:
+    enabled: true
+    block_merge_on: error  # Блокировать merge при наличии error
+    
+  # Еженедельный отчет
+  weekly_report:
+    enabled: true
+    schedule: '0 9 * * 1'  # Понедельник в 9:00 UTC (12:00 MSK)
+    recipients:
+      - vik9541
+    include_metrics: true
+
+# Исключения
+exclusions:
+  paths:
+    - 'tests/**/*'  # Тесты проверяются по другим правилам
+    - 'docs/**/*'
+    - '*.md'
+    - '.github/**/*'
+    - 'CREDENTIALS/**/*'  # Чувствительные данные
+    - 'node_modules/**/*'
+    - 'venv/**/*'
+    - '__pycache__/**/*'
+    
+  rules:
+    # Исключения для конкретных файлов
+    - path: 'batch_analyzer.py'
+      disabled_rules:
+        - PY007  # Сложность допустима для анализатора
+        
+    - path: 'api/main.py'
+      disabled_rules:
+        - PY006  # FastAPI endpoints могут не иметь docstring
+
+# Интеграции
+integrations:
+  # Slack уведомления
+  slack:
+    enabled: false
+    webhook_url: ${SLACK_WEBHOOK_URL}
+    notify_on:
+      - error
+      - critical
+      
+  # GitHub Projects
+  github_projects:
+    enabled: true
+    project_id: ${GITHUB_PROJECT_ID}
+    auto_add_issues: true
+    
+  # Prometheus метрики
+  metrics:
+    enabled: true
+    endpoint: /metrics
+    labels:
+      project: super-brain
+      component: code-auditor
+
+# Лимиты производительности
+limits:
+  max_files_per_run: 100
+  max_file_size_mb: 5
+  timeout_seconds: 300
+  max_concurrent_scans: 3
+
+# Логирование
+logging:
+  level: INFO
+  format: json
+  include_timestamps: true
+  log_to_file: true
+  file_path: .github/logs/copilot-agent.log
+
+# Метаданные
+metadata:
+  version: 1.0.0
+  created_by: vik9541
+  created_at: 2025-12-11T13:00:00+03:00
+  last_updated: 2025-12-11T13:00:00+03:00
+  documentation: https://github.com/vik9541/super-brain-digital-twin/blob/main/.github/COPILOT_AGENT_GUIDE.md
