@@ -1,0 +1,72 @@
+name: Validate Kubernetes YAML
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'k8s/**'
+      - '.github/workflows/validate-k8s.yml'
+  pull_request:
+    paths:
+      - 'k8s/**'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Install kubeval
+        run: |
+          wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+          tar xf kubeval-linux-amd64.tar.gz
+          sudo mv kubeval /usr/local/bin
+          
+      - name: Validate Kubernetes YAML files
+        run: |
+          echo "=== Validating all YAML files in k8s/ ==="
+          for file in k8s/*.yaml; do
+            if [ -f "$file" ]; then
+              echo "Validating: $file"
+              kubeval "$file" || exit 1
+            fi
+          done
+          echo "✅ All YAML files are valid!"
+          
+      - name: List Kubernetes resources
+        run: |
+          echo "=== Kubernetes resources found ==="
+          grep -r "kind:" k8s/*.yaml | awk '{print $2}' | sort | uniq -c
+          
+      - name: Check for common issues
+        run: |
+          echo "=== Checking for common configuration issues ==="
+          
+          # Check for hardcoded secrets
+          if grep -r "password\|token\|secret" k8s/ --include="*.yaml" | grep -v "secretKeyRef" | grep -v "Secret"; then
+            echo "⚠️ Warning: Found potential hardcoded secrets"
+          else
+            echo "✅ No obvious hardcoded secrets found"
+          fi
+          
+          # Check for image tags
+          echo ""
+          echo "Docker images referenced:"
+          grep -r "image:" k8s/ --include="*.yaml" | awk -F'image: ' '{print $2}'
+          
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Kubernetes YAML validation passed!"
+          echo "Timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ Kubernetes YAML validation failed!"
+          echo "Timestamp: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          exit 1
