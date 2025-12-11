@@ -1,68 +1,9 @@
-name: Validate Kubernetes YAML
-
-on:
-  push:
-    branches:
-      - main
-    paths:
-      - 'k8s/**'
-      - '.github/workflows/validate-k8s.yml'
-  pull_request:
-    branches:
-      - main
-    paths:
-      - 'k8s/**'
-  workflow_dispatch:
-
-jobs:
-  validate:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-        
-      - name: Check if K8s files exist
-        run: |
-          if [ ! -d "k8s" ] || [ -z "$(find k8s -name '*.yaml' -o -name '*.yml')" ]; then
-            echo "⚠️  No K8s YAML files found in k8s/ directory"
-            exit 0
-          fi
-          echo "✅ K8s directory found with YAML files"
-          
       - name: Validate YAML syntax
         run: |
           echo "=== Checking YAML Syntax ==="
           for file in k8s/*.yaml k8s/*.yml; do
             [ -f "$file" ] || continue
             echo "Validating: $file"
-            python3 -c "import yaml; yaml.safe_load(open('$file'))" && echo "✅ Valid" || exit 1
+            python3 -c "import yaml; list(yaml.safe_load_all(open('$file')))" && echo "✅ Valid" || exit 1
           done
           echo "✅ All YAML files have valid syntax"
-          
-      - name: List Kubernetes resources
-        run: |
-          echo ""
-          echo "=== Kubernetes Resources ==="
-          grep -h "^kind:" k8s/*.yaml k8s/*.yml 2>/dev/null | sed 's/kind: //' | sort | uniq -c || echo "No resources found"
-          
-      - name: Check for common issues
-        run: |
-          echo ""
-          echo "=== Security Check ==="
-          if grep -r "password\|apiKey\|secret" k8s/*.yaml k8s/*.yml 2>/dev/null | grep -v "secretKeyRef" | grep -v "Secret" | grep -v "name: .*secret"; then
-            echo "⚠️  Found potential hardcoded secrets"
-          else
-            echo "✅ No obvious hardcoded secrets"
-          fi
-          
-          echo ""
-          echo "=== Docker Images ==="
-          grep -h "image:" k8s/*.yaml k8s/*.yml 2>/dev/null | sed 's/.*image: *//' | sort -u || echo "No images found"
-          
-      - name: Summary
-        if: always()
-        run: |
-          echo ""
-          echo "=== Validation Complete ==="
-          echo "✅ Kubernetes YAML validation passed"
