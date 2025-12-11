@@ -377,9 +377,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ai-enhanced-analysis
+                  path: |
+                            ai-analysis-report.json
+                                      AI_ENHANCED_REPORT.md
+                                              retention-days: 30
 
-  # Job 7: Итоговый отчет
-     final-report: 
+Job 7: Итоговый отчет
+  final-report:
          name: 📊 Итоговый отчет
     runs-on: ubuntu-latest
     needs: [python-audit, kubernetes-audit, docker-audit, copilot-review, auto-fix]
