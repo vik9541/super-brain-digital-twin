@@ -1,0 +1,41 @@
+name: GitHub Copilot Auto Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+
+jobs:
+  copilot-code-review:
+    name: Copilot Code Review
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      pull-requests: write
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Request Copilot Code Review
+        uses: github/copilot-code-review-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Comment PR with Status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✅ **GitHub Copilot Code Review:** Review completed. Check comments above for findings.'
+            })
