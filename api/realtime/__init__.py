@@ -10,4 +10,4 @@ Provides WebSocket-based real-time synchronization for workspace collaboration:
 
 from .websocket_manager import ConnectionManager, manager
 
-__all__ = ['ConnectionManager', 'manager']
+__all__ = ["ConnectionManager", "manager"]
