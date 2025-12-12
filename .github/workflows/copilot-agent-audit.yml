@@ -357,6 +357,7 @@ jobs:
           python scripts/copilot_agent_runner.py \
             --mode comprehensive \
             --audit-results audit-results \
+          --files "**/*.py" \
             --output ai-analysis-report.json
 
       - name: 📊 Generate Enhanced Report
