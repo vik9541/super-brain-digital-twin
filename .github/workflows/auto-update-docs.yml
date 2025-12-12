@@ -158,6 +158,7 @@ jobs:
           git config --local user.name "GitHub Action"
           git add MASTER_EXPERT_REPORT.md README_MASTER.md
           git commit -m "docs: auto-update documentation $(date +%Y-%m-%d)"
+          git pull --rebase origin ${{ github.ref_name }}
           git push
 
       - name: Send notification to Telegram

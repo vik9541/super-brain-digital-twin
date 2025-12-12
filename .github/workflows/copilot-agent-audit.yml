@@ -316,6 +316,7 @@ jobs:
           git config --local user.name "GitHub Actions Bot"
           git add .
           git commit -m "🤖 Auto-fix: Code formatting and import optimization"
+          git pull --rebase origin ${{ github.ref_name }}
           git push
 
   # Job 6.5: AI-Enhanced Code Analysis
