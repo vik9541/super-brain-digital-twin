@@ -1,15 +1,17 @@
 # api/workspaces/models.py
 # Phase 7: Team Collaboration - Models & Schemas
 
-from pydantic import BaseModel, EmailStr, validator
-from typing import List, Optional, Dict, Any
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 from uuid import UUID
+
+from pydantic import BaseModel, EmailStr, validator
 
 
 class WorkspaceRole(str, Enum):
     """Workspace member roles"""
+
     OWNER = "owner"
     ADMIN = "admin"
     MEMBER = "member"
@@ -18,6 +20,7 @@ class WorkspaceRole(str, Enum):
 
 class WorkspacePlan(str, Enum):
     """Workspace subscription plans"""
+
     FREE = "free"
     PRO = "pro"
     ENTERPRISE = "enterprise"
@@ -25,22 +28,25 @@ class WorkspacePlan(str, Enum):
 
 # ============ CREATE REQUESTS ============
 
+
 class WorkspaceCreate(BaseModel):
     """Create new workspace"""
+
     name: str
     plan: WorkspacePlan = WorkspacePlan.PRO
-    
-    @validator('name')
+
+    @validator("name")
     def name_not_empty(cls, v):
         if not v or len(v.strip()) == 0:
-            raise ValueError('Workspace name cannot be empty')
+            raise ValueError("Workspace name cannot be empty")
         if len(v) > 100:
-            raise ValueError('Workspace name must be <= 100 characters')
+            raise ValueError("Workspace name must be <= 100 characters")
         return v.strip()
 
 
 class WorkspaceMemberInvite(BaseModel):
     """Invite member to workspace"""
+
     email: EmailStr
     role: WorkspaceRole = WorkspaceRole.MEMBER
     message: Optional[str] = None
@@ -48,26 +54,30 @@ class WorkspaceMemberInvite(BaseModel):
 
 class WorkspaceUpdate(BaseModel):
     """Update workspace settings"""
+
     name: Optional[str] = None
     plan: Optional[WorkspacePlan] = None
 
 
 # ============ RESPONSE MODELS ============
 
+
 class WorkspaceMemberInfo(BaseModel):
     """Member in workspace"""
+
     user_id: UUID
     email: str
     name: Optional[str] = None
     role: WorkspaceRole
     joined_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class WorkspaceResponse(BaseModel):
     """Workspace details"""
+
     id: UUID
     name: str
     owner_id: UUID
@@ -76,13 +86,14 @@ class WorkspaceResponse(BaseModel):
     members: List[WorkspaceMemberInfo] = []
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class WorkspaceListResponse(BaseModel):
     """List of workspaces"""
+
     workspaces: List[WorkspaceResponse]
     total: int
     page: int
@@ -91,19 +102,21 @@ class WorkspaceListResponse(BaseModel):
 
 class SharedContactListCreate(BaseModel):
     """Create shared contact list"""
+
     name: str
     description: Optional[str] = None
     contact_ids: List[UUID] = []
-    
-    @validator('name')
+
+    @validator("name")
     def name_not_empty(cls, v):
         if not v or len(v.strip()) == 0:
-            raise ValueError('List name cannot be empty')
+            raise ValueError("List name cannot be empty")
         return v.strip()
 
 
 class SharedContactList(BaseModel):
     """Shared contact list"""
+
     id: UUID
     workspace_id: UUID
     name: str
@@ -112,13 +125,14 @@ class SharedContactList(BaseModel):
     created_by: UUID
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class ActivityLogEntry(BaseModel):
     """Activity log entry"""
+
     id: UUID
     workspace_id: UUID
     contact_id: Optional[UUID] = None
@@ -128,13 +142,14 @@ class ActivityLogEntry(BaseModel):
     description: Optional[str] = None
     details: Dict[str, Any] = {}
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class ActivityLogResponse(BaseModel):
     """Activity log response"""
+
     entries: List[ActivityLogEntry]
     total: int
     page: int
@@ -143,6 +158,7 @@ class ActivityLogResponse(BaseModel):
 
 class NotificationResponse(BaseModel):
     """Notification"""
+
     id: UUID
     type: str  # contact_shared, member_added, etc
     title: str
@@ -150,13 +166,14 @@ class NotificationResponse(BaseModel):
     data: Dict[str, Any]
     read: bool
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class NotificationListResponse(BaseModel):
     """List of notifications"""
+
     notifications: List[NotificationResponse]
     unread_count: int
     total: int
@@ -164,27 +181,30 @@ class NotificationListResponse(BaseModel):
 
 # ============ DATABASE MODELS (for reference) ============
 
+
 class WorkspaceDB(BaseModel):
     """Workspace database model"""
+
     id: UUID
     name: str
     owner_id: UUID
     plan: WorkspacePlan
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class WorkspaceMemberDB(BaseModel):
     """Workspace member database model"""
+
     id: UUID
     workspace_id: UUID
     user_id: UUID
     email: str
     role: WorkspaceRole
     joined_at: datetime
-    
+
     class Config:
         from_attributes = True

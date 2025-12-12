@@ -9,16 +9,16 @@ Advanced machine learning services:
 - Contact clustering
 """
 
+from .churn_predictor import ChurnPredictor
+from .clustering_service import ContactClusteringService
 from .embeddings_service import ContactEmbeddingsService
 from .recommendation_engine import RecommendationEngine
-from .churn_predictor import ChurnPredictor
 from .sentiment_analyzer import SentimentAnalyzer
-from .clustering_service import ContactClusteringService
 
 __all__ = [
-    'ContactEmbeddingsService',
-    'RecommendationEngine',
-    'ChurnPredictor',
-    'SentimentAnalyzer',
-    'ContactClusteringService',
+    "ContactEmbeddingsService",
+    "RecommendationEngine",
+    "ChurnPredictor",
+    "SentimentAnalyzer",
+    "ContactClusteringService",
 ]

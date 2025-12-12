@@ -5,17 +5,17 @@ Based on SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md
 🆕 FIX: Added photo/document processing with Base64 encoding for Perplexity AI
 """
 
-import os
-import logging
-import httpx
-import base64
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters import Command
-from aiogram.types import Message, ContentType
 import asyncio
-import json
+import base64
 import datetime
-from io import BytesIO
+import json
+import logging
+import os
+
+import httpx
+from aiogram import Bot, Dispatcher, F
+from aiogram.filters import Command
+from aiogram.types import Message
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -39,11 +39,16 @@ conversation_contexts = {}
 # SUPABASE CLIENT FOR RAW DATA STORAGE
 # ============================================
 try:
-    from supabase import create_client, Client
+    from supabase import Client, create_client
+
     SUPABASE_URL = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
-    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
-    logger.info(f"📊 Supabase RAW storage: {'✅ Enabled' if supabase else '⚠️ Disabled (env vars missing)'}")
+    supabase: Client = (
+        create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
+    )
+    logger.info(
+        f"📊 Supabase RAW storage: {'✅ Enabled' if supabase else '⚠️ Disabled (env vars missing)'}"
+    )
 except ImportError:
     supabase = None
     logger.warning("⚠️ Supabase not installed - RAW data storage disabled")
@@ -57,18 +62,20 @@ async def download_file_as_base64(file_id: str, file_type: str = "photo") -> str
         # Get file info from Telegram
         file = await bot.get_file(file_id)
         file_path = file.file_path
-        
+
         # Download file
         file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
         async with httpx.AsyncClient() as client:
             response = await client.get(file_url)
             response.raise_for_status()
-            
+
             # Convert to Base64
             file_bytes = response.content
-            base64_data = base64.b64encode(file_bytes).decode('utf-8')
-            
-            logger.info(f"✅ Downloaded {file_type}: {len(file_bytes)} bytes -> {len(base64_data)} base64 chars")
+            base64_data = base64.b64encode(file_bytes).decode("utf-8")
+
+            logger.info(
+                f"✅ Downloaded {file_type}: {len(file_bytes)} bytes -> {len(base64_data)} base64 chars"
+            )
             return base64_data
     except Exception as e:
         logger.error(f"❌ Failed to download file {file_id}: {e}")
@@ -81,7 +88,7 @@ async def save_raw_message(message: Message, message_type: str, reply_to_id: int
     """
     if not supabase:
         return None
-    
+
     try:
         # Prepare RAW JSON data
         raw_json = {
@@ -91,9 +98,11 @@ async def save_raw_message(message: Message, message_type: str, reply_to_id: int
             "date": message.date.isoformat() if message.date else None,
             "text": message.text,
             "caption": message.caption,
-            "reply_to_message_id": message.reply_to_message.message_id if message.reply_to_message else None,
+            "reply_to_message_id": (
+                message.reply_to_message.message_id if message.reply_to_message else None
+            ),
         }
-        
+
         # Extract message text based on type
         msg_text = ""
         if message.text:
@@ -107,51 +116,64 @@ async def save_raw_message(message: Message, message_type: str, reply_to_id: int
         elif message_type == "photo":
             # 🆕 Include caption with photo
             msg_text = message.caption if message.caption else "[Photo]"
-        
+
         # Insert into raw_messages table
-        result = supabase.table("raw_messages").insert({
-            "user_id": message.from_user.id,
-            "message_id": message.message_id,
-            "chat_id": message.chat.id,
-            "message_text": msg_text,
-            "message_type": message_type,
-            "reply_to_message_id": reply_to_id,
-            "raw_telegram_json": raw_json,
-            "received_at": datetime.datetime.now().isoformat(),
-            "is_processed": False
-        }).execute()
-        
+        result = (
+            supabase.table("raw_messages")
+            .insert(
+                {
+                    "user_id": message.from_user.id,
+                    "message_id": message.message_id,
+                    "chat_id": message.chat.id,
+                    "message_text": msg_text,
+                    "message_type": message_type,
+                    "reply_to_message_id": reply_to_id,
+                    "raw_telegram_json": raw_json,
+                    "received_at": datetime.datetime.now().isoformat(),
+                    "is_processed": False,
+                }
+            )
+            .execute()
+        )
+
         # Save file info if present
         if message.document:
-            supabase.table("raw_files").insert({
-                "message_id": message.message_id,
-                "file_id": message.document.file_id,
-                "file_type": "document",
-                "file_name": message.document.file_name,
-                "file_size": message.document.file_size,
-                "mime_type": message.document.mime_type,
-            }).execute()
+            supabase.table("raw_files").insert(
+                {
+                    "message_id": message.message_id,
+                    "file_id": message.document.file_id,
+                    "file_type": "document",
+                    "file_name": message.document.file_name,
+                    "file_size": message.document.file_size,
+                    "mime_type": message.document.mime_type,
+                }
+            ).execute()
         elif message.voice:
-            supabase.table("raw_files").insert({
-                "message_id": message.message_id,
-                "file_id": message.voice.file_id,
-                "file_type": "voice",
-                "file_size": message.voice.file_size,
-                "mime_type": message.voice.mime_type,
-            }).execute()
+            supabase.table("raw_files").insert(
+                {
+                    "message_id": message.message_id,
+                    "file_id": message.voice.file_id,
+                    "file_type": "voice",
+                    "file_size": message.voice.file_size,
+                    "mime_type": message.voice.mime_type,
+                }
+            ).execute()
         elif message.photo:
             photo = message.photo[-1]  # Get largest photo
-            supabase.table("raw_files").insert({
-                "message_id": message.message_id,
-                "file_id": photo.file_id,
-                "file_type": "photo",
-                "file_size": photo.file_size,
-            }).execute()
-        
+            supabase.table("raw_files").insert(
+                {
+                    "message_id": message.message_id,
+                    "file_id": photo.file_id,
+                    "file_type": "photo",
+                    "file_size": photo.file_size,
+                }
+            ).execute()
+
         return result.data[0] if result.data else None
     except Exception as e:
         logger.error(f"Failed to save RAW message: {e}")
         return None
+
 
 async def analyze_message_intent(message_data: dict) -> dict:
     """
@@ -159,33 +181,37 @@ async def analyze_message_intent(message_data: dict) -> dict:
     Returns: {intent, action, confidence, questions, answer}
     """
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:  # 🆕 Increased timeout for image processing
+        async with httpx.AsyncClient(
+            timeout=60.0
+        ) as client:  # 🆕 Increased timeout for image processing
             response = await client.post(UNIVERSAL_WORKFLOW_URL, json=message_data)
             response.raise_for_status()
-            
+
             # 🆕 Handle empty or non-JSON responses
             if not response.content:
                 return {
                     "error": "Empty response from N8N",
                     "confidence": 0,
-                    "answer": "❌ Получен пустой ответ от сервера"
+                    "answer": "❌ Получен пустой ответ от сервера",
                 }
-            
+
             try:
                 return response.json()
             except json.JSONDecodeError as json_err:
-                logger.error(f"JSON decode error: {json_err}. Response content: {response.text[:500]}")
+                logger.error(
+                    f"JSON decode error: {json_err}. Response content: {response.text[:500]}"
+                )
                 return {
                     "error": f"Invalid JSON: {str(json_err)}",
                     "confidence": 0,
-                    "answer": f"❌ Ошибка обработки: {response.text[:200]}"
+                    "answer": f"❌ Ошибка обработки: {response.text[:200]}",
                 }
     except Exception as e:
         logger.error(f"Perplexity AI analysis error: {e}")
         return {
             "error": str(e),
             "confidence": 0,
-            "answer": f"❌ Произошла ошибка при обработке: {str(e)}"
+            "answer": f"❌ Произошла ошибка при обработке: {str(e)}",
         }
 
 
@@ -193,16 +219,16 @@ async def handle_universal_message(message: Message):
     """
     Universal handler for ANY message type (text, file, voice, photo)
     This is the CORE of SUPER BRAIN v4.0 architecture
-    
+
     🆕 FIXED: Now properly handles photos with Base64 encoding
     """
     user_id = message.from_user.id
-    
+
     # Extract message content
     message_text = ""
     message_type = "text"
     file_data = None
-    
+
     if message.text:
         message_text = message.text
         message_type = "text"
@@ -219,22 +245,26 @@ async def handle_universal_message(message: Message):
     elif message.photo:
         # 🆕 CRITICAL FIX: Process photo with caption
         photo = message.photo[-1]  # Get highest resolution
-        message_text = message.caption if message.caption else "[Photo received - please analyze what you see in this image]"
+        message_text = (
+            message.caption
+            if message.caption
+            else "[Photo received - please analyze what you see in this image]"
+        )
         message_type = "photo"
         # 🆕 Download and encode photo
         file_data = await download_file_as_base64(photo.file_id, "photo")
-        
+
         if not file_data:
             await message.answer("❌ Не удалось загрузить фото. Попробуйте еще раз.")
             return
-    
+
     # 🆕 RAW DATA STORAGE: Save message for batch analysis
     reply_to_id = message.reply_to_message.message_id if message.reply_to_message else None
     await save_raw_message(message, message_type, reply_to_id)
-    
+
     # Get conversation context
     context = conversation_contexts.get(user_id, [])
-    
+
     # Prepare data for Perplexity AI analysis
     analysis_data = {
         "message": message_text,
@@ -242,61 +272,59 @@ async def handle_universal_message(message: Message):
         "user_id": user_id,
         "chat_id": message.chat.id,
         "context": context[-3:] if len(context) > 0 else [],  # Last 3 messages for context
-        "request_type": "universal_analysis"
+        "request_type": "universal_analysis",
     }
-    
+
     # 🆕 Add file data if present (Base64 encoded)
     if file_data:
         analysis_data["file_base64"] = file_data
         analysis_data["has_file"] = True
-        logger.info(f"📎 Sending {message_type} with file_base64 ({len(file_data)} chars) to Perplexity AI")
-    
+        logger.info(
+            f"📎 Sending {message_type} with file_base64 ({len(file_data)} chars) to Perplexity AI"
+        )
+
     # Send "thinking" message
     status_msg = await message.answer("🧠 Анализирую...")
-    
+
     # Analyze via Perplexity AI
     result = await analyze_message_intent(analysis_data)
-    
+
     # Update conversation context
     if user_id not in conversation_contexts:
         conversation_contexts[user_id] = []
-    conversation_contexts[user_id].append({
-        "role": "user",
-        "content": message_text
-    })
-    
+    conversation_contexts[user_id].append({"role": "user", "content": message_text})
+
     # Handle result
     if "error" in result:
         await status_msg.edit_text(result.get("answer", "❌ Ошибка обработки"))
         return
-    
+
     # Extract AI response
     answer = result.get("answer", "Не могу определить, что нужно сделать. Уточните, пожалуйста?")
     confidence = result.get("confidence", 0)
     questions = result.get("questions", [])
-    
+
     # Save AI response to context
-    conversation_contexts[user_id].append({
-        "role": "assistant",
-        "content": answer
-    })
-    
+    conversation_contexts[user_id].append({"role": "assistant", "content": answer})
+
     # Send response
     await status_msg.edit_text(answer)
-    
+
     # 🆕 Save bot response to database
     if supabase:
         try:
-            supabase.table("bot_responses").insert({
-                "reply_to_message_id": message.message_id,
-                "response_text": answer,
-                "bot_message_id": status_msg.message_id,
-                "sent_at": datetime.datetime.now().isoformat(),
-                "is_error": False
-            }).execute()
+            supabase.table("bot_responses").insert(
+                {
+                    "reply_to_message_id": message.message_id,
+                    "response_text": answer,
+                    "bot_message_id": status_msg.message_id,
+                    "sent_at": datetime.datetime.now().isoformat(),
+                    "is_error": False,
+                }
+            ).execute()
         except Exception as e:
             logger.error(f"Failed to save bot response: {e}")
-    
+
     # If AI needs clarification (confidence < 80% or has questions)
     if confidence < 80 and questions:
         clarification_text = "\n\n❓ У меня есть уточняющие вопросы:\n"
@@ -308,6 +336,7 @@ async def handle_universal_message(message: Message):
 # ============================================
 # COMMAND HANDLERS (for basic navigation)
 # ============================================
+
 
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
@@ -371,13 +400,17 @@ async def cmd_status(message: Message):
     try:
         # Ping N8N webhook
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{N8N_WEBHOOK_BASE.replace('/webhook', '')}/healthz", follow_redirects=True)
-            n8n_status = "🟢 OK" if response.status_code in [200, 404] else "🔴 ERROR"  # 404 is ok, means N8N is up
+            response = await client.get(
+                f"{N8N_WEBHOOK_BASE.replace('/webhook', '')}/healthz", follow_redirects=True
+            )
+            n8n_status = (
+                "🟢 OK" if response.status_code in [200, 404] else "🔴 ERROR"
+            )  # 404 is ok, means N8N is up
     except:
         n8n_status = "🟡 UNKNOWN"
-    
+
     supabase_status = "🟢 Connected" if supabase else "🟡 Disabled"
-    
+
     text = f"""
 📊 **Статус Системы**
 
@@ -398,12 +431,13 @@ async def cmd_status(message: Message):
 # UNIVERSAL MESSAGE HANDLER (MAIN LOGIC)
 # ============================================
 
+
 @dp.message(F.text | F.voice | F.document | F.photo)
 async def handle_any_message(message: Message):
     """
     Main universal handler for ALL message types
     This replaces /ask, /analyze, /report commands
-    
+
     🆕 Now with proper photo/document processing!
     """
     await handle_universal_message(message)
@@ -413,12 +447,13 @@ async def handle_any_message(message: Message):
 # MAIN FUNCTION
 # ============================================
 
+
 async def main():
     """Main function to start the bot"""
     logger.info("🚀 Starting SUPER BRAIN v4.0 Telegram Bot...")
     logger.info(f"📡 N8N Webhook: {UNIVERSAL_WORKFLOW_URL}")
     logger.info("🆕 Photo/Document processing: ENABLED")
-    
+
     try:
         await dp.start_polling(bot)
     finally:

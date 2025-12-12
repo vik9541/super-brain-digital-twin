@@ -4,11 +4,11 @@ Strawberry GraphQL Schema for Super Brain Digital Twin.
 Defines GraphQL types, queries, and mutations.
 """
 
-import strawberry
-from typing import List, Optional
 from datetime import datetime
+from typing import List, Optional
 from uuid import UUID
 
+import strawberry
 
 # ============================================================================
 # CORE TYPES
@@ -18,7 +18,7 @@ from uuid import UUID
 @strawberry.type
 class Contact:
     """Contact entity from Supabase database."""
-    
+
     id: UUID
     first_name: str
     last_name: str
@@ -34,7 +34,7 @@ class Contact:
 @strawberry.type
 class Connection:
     """Connection between two contacts."""
-    
+
     id: UUID
     source_id: UUID
     target_id: UUID
@@ -51,7 +51,7 @@ class Connection:
 @strawberry.type
 class SimilarContact:
     """Similar contact from embedding-based semantic search."""
-    
+
     contact_id: UUID
     first_name: str
     last_name: str
@@ -63,7 +63,7 @@ class SimilarContact:
 @strawberry.type
 class ScoreComponents:
     """Breakdown of recommendation scoring components."""
-    
+
     mutual_friends: float  # 0.3 weight
     semantic_similarity: float  # 0.3 weight
     influence_score: float  # 0.25 weight
@@ -73,7 +73,7 @@ class ScoreComponents:
 @strawberry.type
 class Recommendation:
     """'People You Should Know' recommendation with scoring breakdown."""
-    
+
     contact_id: UUID
     first_name: str
     last_name: str
@@ -87,7 +87,7 @@ class Recommendation:
 @strawberry.type
 class ChurnFeatures:
     """Feature values used for churn prediction."""
-    
+
     days_since_update_norm: float
     interaction_frequency_norm: float
     inverse_influence: float
@@ -98,7 +98,7 @@ class ChurnFeatures:
 @strawberry.type
 class ChurnPrediction:
     """Contact churn risk prediction with interventions."""
-    
+
     contact_id: UUID
     churn_probability: float  # 0-1
     risk_level: str  # HIGH, MEDIUM, LOW
@@ -111,7 +111,7 @@ class ChurnPrediction:
 @strawberry.type
 class SentimentComponents:
     """Breakdown of sentiment analysis components."""
-    
+
     tags_sentiment: float  # -1 to 1
     notes_sentiment: float  # -1 to 1
     interactions_sentiment: float  # -1 to 1
@@ -120,7 +120,7 @@ class SentimentComponents:
 @strawberry.type
 class Sentiment:
     """Multi-component sentiment analysis for contact."""
-    
+
     contact_id: UUID
     overall_sentiment: float  # -1 (negative) to 1 (positive)
     sentiment_label: str  # Very Positive, Positive, Neutral, Negative, Very Negative
@@ -132,7 +132,7 @@ class Sentiment:
 @strawberry.type
 class Cluster:
     """Contact cluster with inferred topics."""
-    
+
     cluster_id: int
     cluster_size: int
     cluster_topics: List[str]  # Top tags/interests
@@ -147,25 +147,24 @@ class Cluster:
 @strawberry.type
 class Query:
     """Root GraphQL query type."""
-    
+
     # Import resolvers (will be defined in resolvers.py)
-    from .resolvers import (
-        get_contacts,
-        get_contact_by_id,
-        get_influencers,
-        # Phase 6: ML-powered queries
-        similar_contacts,
-        recommended_contacts,
+    from .resolvers import (  # Phase 6: ML-powered queries
         churn_risk,
-        contact_sentiment,
         contact_clusters,
+        contact_sentiment,
+        get_contact_by_id,
+        get_contacts,
+        get_influencers,
+        recommended_contacts,
+        similar_contacts,
     )
-    
+
     # Core contact queries
     contacts: List[Contact] = strawberry.field(resolver=get_contacts)
     contact: Optional[Contact] = strawberry.field(resolver=get_contact_by_id)
     influencers: List[Contact] = strawberry.field(resolver=get_influencers)
-    
+
     # Phase 6: ML-powered queries
     similar_contacts: List[SimilarContact] = strawberry.field(resolver=similar_contacts)
     recommended_contacts: List[Recommendation] = strawberry.field(resolver=recommended_contacts)

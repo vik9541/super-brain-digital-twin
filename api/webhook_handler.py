@@ -2,44 +2,53 @@
 Handles incoming/outgoing webhooks for Telegram bot and N8N workflows
 """
 
-import os
 import logging
+import os
 from datetime import datetime
 from typing import Dict, Optional
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from pydantic import BaseModel
+
 import httpx
-import asyncio
+from fastapi import BackgroundTasks, FastAPI, HTTPException
+from pydantic import BaseModel
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Configuration
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8326941950:AAHxjtILMo9qgPjm1Ii8CSsIZMLSp3B2oVE")
+TELEGRAM_BOT_TOKEN = os.getenv(
+    "TELEGRAM_BOT_TOKEN", "8326941950:AAHxjtILMo9qgPjm1Ii8CSsIZMLSp3B2oVE"
+)
 TELEGRAM_API_BASE = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}"
 N8N_WEBHOOK_BASE = os.getenv("N8N_WEBHOOK_BASE", "https://lavrentev.app.n8n.cloud/webhook")
+
 
 # Pydantic models
 class TelegramWebhookUpdate(BaseModel):
     """Incoming webhook from Telegram"""
+
     message: Optional[Dict] = None
     user_id: Optional[int] = None
     chat_id: Optional[int] = None
 
+
 class N8NResponse(BaseModel):
     """Response from N8N workflow"""
+
     chat_id: int
     response: str
     request_id: Optional[str] = None
     timestamp: Optional[str] = None
 
+
 class HealthCheck(BaseModel):
     """Health check response"""
+
     status: str
     timestamp: str
     bot_status: str
     n8n_connected: bool
+
 
 # Initialize FastAPI app
 app = FastAPI(title="Digital Twin Webhook Handler", version="3.0.0")
@@ -53,10 +62,7 @@ async def send_telegram_message(chat_id: int, text: str) -> bool:
     try:
         url = f"{TELEGRAM_API_BASE}/sendMessage"
         async with httpx.AsyncClient(timeout=10.0) as client:
-            response = await client.post(
-                url,
-                json={"chat_id": chat_id, "text": text}
-            )
+            response = await client.post(url, json={"chat_id": chat_id, "text": text})
             response.raise_for_status()
             logger.info(f"Message sent to chat {chat_id}")
             return True
@@ -98,38 +104,38 @@ async def telegram_webhook(update: TelegramWebhookUpdate, background_tasks: Back
     """
     try:
         logger.info(f"Received Telegram update: {update.dict()}")
-        
+
         # Extract message details
         message_text = update.message.get("text", "") if update.message else ""
-        user_id = update.user_id or (update.message.get("from", {}).get("id") if update.message else None)
-        chat_id = update.chat_id or (update.message.get("chat", {}).get("id") if update.message else None)
-        
+        user_id = update.user_id or (
+            update.message.get("from", {}).get("id") if update.message else None
+        )
+        chat_id = update.chat_id or (
+            update.message.get("chat", {}).get("id") if update.message else None
+        )
+
         if not message_text or not chat_id:
             raise HTTPException(status_code=400, detail="Invalid update format")
-        
+
         # Route to appropriate N8N workflow
         workflow = "digital-twin-ask"  # Default workflow
         if message_text.startswith("/analyze"):
             workflow = "daily-analysis"
         elif message_text.startswith("/report"):
             workflow = "hourly-report"
-        
+
         # Call N8N workflow
         workflow_data = {
             "question": message_text.replace("/ask", "", 1).strip(),
             "user_id": user_id,
             "chat_id": chat_id,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
-        
+
         workflow_response = await call_n8n_webhook(workflow, workflow_data)
-        
-        return {
-            "status": "processed",
-            "workflow": workflow,
-            "response": workflow_response
-        }
-        
+
+        return {"status": "processed", "workflow": workflow, "response": workflow_response}
+
     except Exception as e:
         logger.error(f"Telegram webhook error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -143,19 +149,19 @@ async def n8n_response(data: N8NResponse):
     """
     try:
         logger.info(f"Received N8N response for chat {data.chat_id}")
-        
+
         # Send response to Telegram
         success = await send_telegram_message(data.chat_id, data.response)
-        
+
         if not success:
             raise HTTPException(status_code=500, detail="Failed to send message to Telegram")
-        
+
         return {
             "status": "sent_to_telegram",
             "chat_id": data.chat_id,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
         }
-        
+
     except Exception as e:
         logger.error(f"N8N response handler error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -167,12 +173,12 @@ async def health() -> HealthCheck:
     Endpoint 3: API health check
     """
     n8n_connected = await check_n8n_connection()
-    
+
     return HealthCheck(
         status="healthy",
         timestamp=datetime.now().isoformat(),
         bot_status="active",
-        n8n_connected=n8n_connected
+        n8n_connected=n8n_connected,
     )
 
 
@@ -180,13 +186,13 @@ async def health() -> HealthCheck:
 async def status():
     """Detailed status endpoint"""
     n8n_connected = await check_n8n_connection()
-    
+
     return {
         "api": "🟢 OK",
         "telegram_bot": "🟢 OK",
         "n8n_connection": "🟢 OK" if n8n_connected else "🔴 DOWN",
         "timestamp": datetime.now().isoformat(),
-        "version": "3.0.0"
+        "version": "3.0.0",
     }
 
 
@@ -195,7 +201,7 @@ async def startup_event():
     """Run on application startup"""
     logger.info("🚀 Webhook Handler started")
     logger.info(f"N8N Base URL: {N8N_WEBHOOK_BASE}")
-    
+
     # Check N8N connection
     n8n_ok = await check_n8n_connection()
     if n8n_ok:
@@ -212,4 +218,5 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

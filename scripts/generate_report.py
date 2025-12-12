@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Report Generator - Генератор визуальных HTML отчетов по результатам аудита"""
-import argparse, json, sys
-from pathlib import Path
+import argparse
+import json
 from datetime import datetime
-from typing import Dict, List
+from pathlib import Path
+from typing import Dict
 
-HTML_TEMPLATE = '''<!DOCTYPE html>
+HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -71,68 +72,71 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
     </div>
 </body>
 </html>
-'''
+"""
 
-def generate_html_report(results: Dict, output_path: str = 'audit-report.html'):
+
+def generate_html_report(results: Dict, output_path: str = "audit-report.html"):
     """HTML отчет с визуализацией"""
     critical = errors = warnings = 0
-    models_html = ''
-    
-    for model in results.get('models', []):
-        model_name = model.get('model', 'Unknown')
-        findings = model.get('findings', [])
-        
+    models_html = ""
+
+    for model in results.get("models", []):
+        model_name = model.get("model", "Unknown")
+        findings = model.get("findings", [])
+
         models_html += f'<div class="model-section"><h2>🧠 {model_name}</h2>'
-        
+
         if isinstance(findings, list):
             for finding in findings:
                 if isinstance(finding, dict):
-                    severity = 'info'
-                    if 'error' in str(finding).lower(): 
-                        severity = 'error'
+                    severity = "info"
+                    if "error" in str(finding).lower():
+                        severity = "error"
                         errors += 1
-                    elif 'warning' in str(finding).lower(): 
-                        severity = 'warning'
+                    elif "warning" in str(finding).lower():
+                        severity = "warning"
                         warnings += 1
-                    
-                    models_html += f'''<div class="finding {severity}">
+
+                    models_html += f"""<div class="finding {severity}">
                         <span class="badge {severity}">{severity.upper()}</span>
                         <strong>{finding.get('file', 'N/A')}</strong>
                         <p>{finding.get('analysis', str(finding))[:200]}...</p>
-                    </div>'''
-        
-        if model.get('error'):
+                    </div>"""
+
+        if model.get("error"):
             models_html += f'<div class="finding error">❌ Error: {model["error"]}</div>'
-        
-        models_html += '</div>'
-    
+
+        models_html += "</div>"
+
     html = HTML_TEMPLATE.format(
-        timestamp=results.get('timestamp', datetime.now().isoformat()),
-        mode=results.get('mode', 'full'),
-        files_count=results.get('files_count', 0),
+        timestamp=results.get("timestamp", datetime.now().isoformat()),
+        mode=results.get("mode", "full"),
+        files_count=results.get("files_count", 0),
         critical=critical,
         errors=errors,
         warnings=warnings,
-        models_html=models_html
+        models_html=models_html,
     )
-    
-    Path(output_path).write_text(html, encoding='utf-8')
-    print(f'✅ Отчет сохранен: {output_path}')
+
+    Path(output_path).write_text(html, encoding="utf-8")
+    print(f"✅ Отчет сохранен: {output_path}")
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input', required=True, help='JSON results file')
-    parser.add_argument('--output', default='audit-report.html')
-    parser.add_argument('--format', default='html', choices=['html', 'markdown'])
+    parser.add_argument("--input", required=True, help="JSON results file")
+    parser.add_argument("--output", default="audit-report.html")
+    parser.add_argument("--format", default="html", choices=["html", "markdown"])
     args = parser.parse_args()
-    
+
     with open(args.input) as f:
         results = json.load(f)
-    
-    if args.format == 'html':
+
+    if args.format == "html":
         generate_html_report(results, args.output)
     else:
-        print(f'⚠️ Format {args.format} not yet implemented')
+        print(f"⚠️ Format {args.format} not yet implemented")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
