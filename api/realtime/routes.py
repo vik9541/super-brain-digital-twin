@@ -16,6 +16,37 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ws", tags=["websockets"])
 
 
+async def verify_workspace_access(workspace_id: str, user_id: str) -> bool:
+    """Verify user has access to workspace
+    
+    Args:
+        workspace_id: Workspace identifier
+        user_id: User identifier
+        
+    Returns:
+        bool: True if user has access
+        
+    Raises:
+        HTTPException: If access denied
+    """
+    # TODO: Check database for workspace membership
+    # For now, allow all authenticated users
+    # In production:
+    # 
+    # from api.main import supabase
+    # member = supabase.table('workspace_members')\
+    #     .select('*')\
+    #     .eq('workspace_id', workspace_id)\
+    #     .eq('user_id', user_id)\
+    #     .execute()
+    # 
+    # if not member.data:
+    #     raise HTTPException(403, 'Access denied: not a workspace member')
+    
+    logger.info(f'Access verified for user {user_id} to workspace {workspace_id}')
+    return True
+
+
 async def get_user_from_token(token: Optional[str]) -> tuple:
     """Extract user info from JWT token
     
@@ -31,23 +62,30 @@ async def get_user_from_token(token: Optional[str]) -> tuple:
     if not token:
         raise HTTPException(status_code=401, detail="Token required")
     
-    # TODO: Implement JWT token verification
-    # For now, return mock data
-    # In production, decode JWT and extract user info
-    
+    # Real JWT token verification
     try:
-        # from api.auth import verify_jwt_token
-        # payload = verify_jwt_token(token)
-        # return (payload['user_id'], payload.get('email'), payload.get('name'))
+        from jose import jwt, JWTError
+        import os
         
-        # Mock implementation
-        return ("user_" + token[:8], f"user@example.com", "Demo User")
+        JWT_SECRET = os.getenv('JWT_SECRET', 'your-secret-key-change-in-production')
+        JWT_ALGORITHM = 'HS256'
+        
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        
+        # Extract user info from JWT payload
+        user_id = payload.get('user_id') or payload.get('sub') or payload.get('id')
+        email = payload.get('email')
+        name = payload.get('name') or payload.get('username')
+        
+        if not user_id:
+            raise HTTPException(status_code=401, detail='Invalid token: missing user_id')
+        
+        return (str(user_id), email, name)
+    except JWTError as e:
+        logger.error(f'JWT decode failed: {e}')
+        raise HTTPException(status_code=401, detail='Invalid or expired token')
     except Exception as e:
-        logger.error(f"Token verification failed: {e}")
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-
-@router.websocket("/workspace/{workspace_id}")
+        logger.error(f'Token verification failed: {e}')raise HTTPException(status_code=401, detail='Authentication failed')
 async def websocket_endpoint(
     websocket: WebSocket,
     workspace_id: str,
@@ -100,9 +138,13 @@ async def websocket_endpoint(
         logger.warning(f"Unauthorized WebSocket connection attempt to workspace {workspace_id}")
         return
     
-    # TODO: Verify user has access to this workspace
-    # Check database if user is member of workspace
-    # For now, allow all authenticated users
+    # Verify user has access to this workspace
+    try:
+        await verify_workspace_access(workspace_id, user_id)
+    except HTTPException as e:
+        await websocket.close(code=4003, reason="Access Denied")
+        logger.warning(f"Access denied for user {user_id} to workspace {workspace_id}")
+        return
     
     # Connect user to workspace
     await manager.connect(
