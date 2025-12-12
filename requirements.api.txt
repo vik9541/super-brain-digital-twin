@@ -53,3 +53,21 @@ redis>=5.0.0
 # Rate Limiting
 slowapi==0.1.9
 slowapi>=0.1.9
+
+# ============================================================================
+# Phase 6: Advanced ML Dependencies
+# ============================================================================
+
+# OpenAI Embeddings API
+openai>=1.12.0
+
+# Machine Learning
+scikit-learn>=1.4.0
+numpy>=1.26.0
+
+# NLP & Sentiment Analysis
+textblob>=0.18.0
+
+# Job Scheduling
+apscheduler>=3.10.4
+apscheduler>=3.10.4
