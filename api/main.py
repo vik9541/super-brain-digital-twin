@@ -44,6 +44,9 @@ from .auth import verify_jwt_token
 
 # from .workspaces.routes import router as workspaces_router  # TODO: Fix circular import
 
+# Phase 7.2: WebSocket real-time sync
+from .realtime.routes import router as realtime_router
+
 # Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -133,6 +136,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Include workspaces routes (Phase 7.1)
 # app.include_router(workspaces_router)  # TODO: Fix circular import
+
+# Phase 7.2: WebSocket real-time routes
+app.include_router(realtime_router)
 
 # ===== ENDPOINT 1: GET /api/v1/analysis/{id} =====
 
