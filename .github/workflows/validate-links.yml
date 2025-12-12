@@ -49,19 +49,19 @@ jobs:
                                   if 'https://github.com' not in line:
                                       errors.append(f"{filepath}:{i} - Missing https:// in GitHub link")
                                   
-                                  # Проверить основной путь# Проверить основной путь (разрешить все GitHub домены)
-                    # Разрешаем: github.com/user/, docs.github.com, api.github.com, raw.githubusercontent.com и т.д.
-                    github_patterns = [
-                        r'https://github\.com/[a-zA-Z0-9_-]+/',  # github.com/username/
-                        r'https://docs\.github\.com/',          # docs.github.com
-                        r'https://[a-zA-Z0-9-]+\.github\.io/', # username.github.io
-                        r'https://api\.github\.com/',           # api.github.com
-                        r'https://raw\.githubusercontent\.com/', # raw.githubusercontent.com
-                        r'https://[a-zA-Z0-9-]+\.githubusercontent\.com/', # other githubusercontent.com
-                    ]
-                    valid_github_url = any(re.search(pattern, line) for pattern in github_patterns)
-                    if not valid_github_url:
-                        errors.append(f"{filepath}:{i} - Invalid GitHub URL format")
+                                  # Проверить основной путь (разрешить все GitHub домены)
+                                  # Разрешаем: github.com/user/, docs.github.com, api.github.com, raw.githubusercontent.com и т.д.
+                                  github_patterns = [
+                                      r'https://github\.com/[a-zA-Z0-9_-]+/',  # github.com/username/
+                                      r'https://docs\.github\.com/',          # docs.github.com
+                                      r'https://[a-zA-Z0-9-]+\.github\.io/', # username.github.io
+                                      r'https://api\.github\.com/',           # api.github.com
+                                      r'https://raw\.githubusercontent\.com/', # raw.githubusercontent.com
+                                      r'https://[a-zA-Z0-9-]+\.githubusercontent\.com/', # other githubusercontent.com
+                                  ]
+                                  valid_github_url = any(re.search(pattern, line) for pattern in github_patterns)
+                                  if not valid_github_url:
+                                      errors.append(f"{filepath}:{i} - Invalid GitHub URL format")
           
           # Выводить результаты
           if errors:
