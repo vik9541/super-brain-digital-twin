@@ -91,9 +91,9 @@ TASK-005  Andrey M.   READY     12 Dec 17:00     0%        PENDING
 ## ⬜ TASK-002: Batch Analyzer Deployment
 **Статус:** 🟠 В ПРОЦЕСсЕ
 **GitHub Ссылки:**
-- Спецификация: https://github.com/.../TASKS/TASK-002-batch-analyzer.md
-- Python код: https://github.com/.../batch_analyzer.py
-- Dockerfile: https://github.com/.../Dockerfile.batch-analyzer
+- Спецификация: https://github.com/vik9541/super-brain-digital-twin/blob/main/TASKS/TASK-002-batch-analyzer.md
+- Python код: https://github.com/vik9541/super-brain-digital-twin/blob/main/batch_analyzer.py
+- Dockerfile: https://github.com/vik9541/super-brain-digital-twin/blob/main/Dockerfile.batch-analyzer
 ...
 ```
 
