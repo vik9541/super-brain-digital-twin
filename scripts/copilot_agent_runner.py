@@ -105,12 +105,24 @@ def main():
     parser.add_argument("--model", default="all", help="Model to use")
     parser.add_argument("--mode", default="full", help="Analysis mode")
     parser.add_argument("--files", required=True, help="Files to analyze (comma-separated)")
+    parser.add_argument("--audit-results", help="Directory with audit results artifacts")
     parser.add_argument("--output", default="copilot-results.json", help="Output file")
     args = parser.parse_args()
 
     files = [f.strip() for f in args.files.split(",") if f.strip()]
     runner = CopilotAgentRunner()
     results = runner.run(files, args.mode)
+
+    # Include audit results if provided
+    if args.audit_results and Path(args.audit_results).exists():
+        logger.info(f"📂 Loading audit results from {args.audit_results}")
+        results["audit_artifacts"] = {
+            "path": args.audit_results,
+            "available": True,
+            "note": "Audit results available for enhanced analysis"
+        }
+    else:
+        results["audit_artifacts"] = {"available": False}
 
     with open(args.output, "w") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
