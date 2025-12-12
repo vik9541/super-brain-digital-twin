@@ -41,6 +41,7 @@ from supabase import Client, create_client
 
 # JWT Authentication
 from .auth import verify_jwt_token
+
 # from .workspaces.routes import router as workspaces_router  # TODO: Fix circular import
 
 # Logging setup
@@ -63,9 +64,9 @@ async def lifespan(app: FastAPI):
     Initializes external service connections on startup and cleans up on shutdown.
     """
     global supabase, redis_client
-    
+
     logger.info("Starting application...")
-    
+
     # Initialize Supabase client
     try:
         if SUPABASE_URL and SUPABASE_KEY:
@@ -76,14 +77,14 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize Supabase client: {e}")
         supabase = None
-    
+
     # Initialize Redis client (optional)
     try:
         redis_client = redis.from_url(
             os.getenv("REDIS_URL", "redis://localhost:6379"),
             encoding="utf-8",
             decode_responses=True,
-            socket_connect_timeout=2
+            socket_connect_timeout=2,
         )
         # Test connection
         await redis_client.ping()
@@ -91,11 +92,11 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Redis not available - {e}")
         redis_client = None
-    
+
     logger.info("Application startup complete")
-    
+
     yield  # Application runs here
-    
+
     # Cleanup on shutdown
     logger.info("Shutting down application...")
     if redis_client:
@@ -104,7 +105,7 @@ async def lifespan(app: FastAPI):
             logger.info("Redis connection closed")
         except Exception as e:
             logger.error(f"Error closing Redis: {e}")
-    
+
     logger.info("Application shutdown complete")
 
 
