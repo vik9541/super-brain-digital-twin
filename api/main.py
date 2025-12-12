@@ -42,10 +42,11 @@ from supabase import Client, create_client
 # JWT Authentication
 from .auth import verify_jwt_token
 
-# from .workspaces.routes import router as workspaces_router  # TODO: Fix circular import
-
 # Phase 7.2: WebSocket real-time sync
 from .realtime.routes import router as realtime_router
+
+# from .workspaces.routes import router as workspaces_router  # TODO: Fix circular import
+
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
