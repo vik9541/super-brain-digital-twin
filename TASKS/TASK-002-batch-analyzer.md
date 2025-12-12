@@ -1,44 +1,21 @@
-# 📃 TASK-002: Batch Analyzer CronJob
+# 📃 TASK-002: BATCH ANALYZER CRONJOB
 
-**Ответственные ТИМ:М AI-ML отдел**
-
-| Роль | Ответственность | Требуемые Кнания |
-|:---:|:---|:---:|
-| **Dmitry K.** (ML Ops Lead) | Kubernetes CronJob YAML | kubectl, helm, K8s |
-| **Natalia V.** (Data Science) | batch_analyzer.py логика | Python, Pandas, SQL |
-| **Andrey M.** (AI Lead) | Perplexity API интеграция | API, async/await |
-| **Igor S.** (NLP Specialist) | Обработка текста | NLP, parsing |
-
-**Приоритет:** 🟡 IMPORTANT  
-**На дату:** Среда, 9 декабря 2025  
-**Время выполнения:** 6 часов  
-**Зависимости:** TASK-001 (Bot) может работать 
+**Фаза:** WEEK 1 (среда, 9 декабря)
+**Уровень приоритета:** 🟣 CRITICAL
+**Ответственная команда:** INFRA
+**Наследует он:** TASK-001 (Bot готов)
 
 ---
 
-## 🏗️ АРХИТЕКТУРА
+## цель
 
-```
-Supabase Database
-    ↑ (SELECT projects WHERE status='active')
-    │
-    └─ batch_analyzer.py (CronJob Pod)
-    │   └─ Начинается в 02:00 UTC
-    │   └─ Проверит активные проекты
-    │   └─ Отравит каждый в Perplexity API
-    │   └─ Отправит результаты в Telegram
-    │
-    └─ K8s API (Prometheus metrics)
-         └─ batch.duration_seconds
-         └─ batch.projects_processed
-         └─ batch.errors_count
-```
+Создать **K8s CronJob** на DigitalOcean DOKS, который каждые 2 часа (в 02:00 UTC) берет данные из Supabase и анализирует их с Perplexity API.
 
 ---
 
-## 📊 ПОНЕдЕЛЬНО-ПЦИКЛОГРАММА
+## Что надо сделать
 
-### Этап 1: K8s CronJob YAML (09:00-10:30)
+### Этап 1: K8s CronJob YAML (2 часа)
 
 **Файл:** `k8s/batch-analyzer-cronjob.yaml`
 
@@ -48,23 +25,26 @@ kind: CronJob
 metadata:
   name: batch-analyzer
   namespace: production
+  labels:
+    app: digital-twin
+    component: batch-analyzer
 spec:
-  # Час 2:00 AM UTC каждые сутки
-  schedule: "0 2 * * *"
-  
-  # Не u0434ерживать более 3 одновременных запусков
-  concurrencyPolicy: Forbid
-  
-  # Выполнять предыдущие Job если они еще работают
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 1
+  # Каждые 2 часа в 02:00 UTC (00:00, 02:00, 04:00 ... 22:00)
+  schedule: "0 */2 * * *"
+  concurrencyPolicy: Forbid  # Не рав другому
+  successfulJobsHistoryLimit: 3  # Хранить 3 успешных
+  failedJobsHistoryLimit: 3  # Хранить 3 неудачных
   
   jobTemplate:
     spec:
-      backoffLimit: 2  # Перезапуск в случае ошибки
-      activeDeadlineSeconds: 3600  # 1 час макс
+      backoffLimit: 3  # Пересопробюй 3 раза
+      activeDeadlineSeconds: 3600  # Таймаут 1 час
       
       template:
+        metadata:
+          labels:
+            app: digital-twin
+            batch: analyzer
         spec:
           serviceAccountName: batch-analyzer
           restartPolicy: OnFailure
@@ -74,30 +54,34 @@ spec:
             image: registry.digitalocean.com/digital-twin-registry/batch-analyzer:latest
             imagePullPolicy: Always
             
-            # Переменные окружения
             env:
             - name: SUPABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: supabase-secrets
+                  name: supabase-credentials
                   key: url
             - name: SUPABASE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: supabase-secrets
+                  name: supabase-credentials
                   key: key
             - name: PERPLEXITY_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: perplexity-secrets
-                  key: api-key
+                  name: api-credentials
+                  key: perplexity
             - name: TELEGRAM_BOT_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: telegram-secrets
-                  key: bot-token
+                  name: api-credentials
+                  key: telegram
+            - name: BATCH_SIZE
+              value: "100"
+            - name: MAX_WORKERS
+              value: "5"
+            - name: TIMEOUT_SECONDS
+              value: "300"
             
-            # Ресурсы
             resources:
               requests:
                 cpu: 500m
@@ -106,181 +90,103 @@ spec:
                 cpu: 2000m
                 memory: 2Gi
             
-            # Liveness & Readiness
             livenessProbe:
               exec:
-                command:
-                - /bin/sh
-                - -c
-                - test -f /tmp/batch_running || exit 0
-              initialDelaySeconds: 30
-              periodSeconds: 60
+                command: ["python", "-c", "import sys; sys.exit(0)"]
+              initialDelaySeconds: 10
+              periodSeconds: 30
+            
+            volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            
+          volumes:
+          - name: tmp
+            emptyDir: {}
 ```
 
-**Команды:**
-```bash
-# Сохранить YAML
-git add k8s/batch-analyzer-cronjob.yaml
+### Этап 2: ServiceAccount + RBAC (30 мин)
 
-# Нанести в K8s
-kubectl apply -f k8s/batch-analyzer-cronjob.yaml
+**Файл:** `k8s/batch-analyzer-rbac.yaml`
 
-# Проверить
-kubectl get cronjobs -n production
-```
-
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: batch-analyzer
+  namespace: production
 ---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: batch-analyzer
+  namespace: production
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: batch-analyzer
+  namespace: production
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: batch-analyzer
+subjects:
+- kind: ServiceAccount
+  name: batch-analyzer
+  namespace: production
+```
 
-### Этап 2: Python batch_analyzer.py (10:30-13:00)
+### Этап 3: Python batch_analyzer.py (3 часа)
 
-**Файл:** `bot/batch_analyzer.py`
+**Ключевые ретипс:**
 
 ```python
-import asyncio
 import os
-from datetime import datetime
-from typing import List, Dict
-import aiohttp
+import asyncio
 from supabase import create_client
-from telegram import Bot
-import logging
-
-# Конфиг
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
-PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY")
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-DEFAULT_USER_ID = int(os.getenv("DEFAULT_USER_ID"))
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+from perplexity import PerplexityClient
+import telegram
 
 class BatchAnalyzer:
     def __init__(self):
-        self.supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-        self.bot = Bot(token=TELEGRAM_BOT_TOKEN)
-        self.perplexity_url = "https://api.perplexity.ai/openai/v1/chat/completions"
-        self.stats = {
-            "processed": 0,
-            "errors": 0,
-            "start_time": datetime.now()
-        }
-    
-    async def get_active_projects(self) -> List[Dict]:
-        """Получи активные проекты из Supabase"""
-        try:
-            response = self.supabase.table("projects").select("*").eq("status", "active").execute()
-            return response.data
-        except Exception as e:
-            logger.error(f"Error fetching projects: {e}")
-            return []
-    
-    async def analyze_project_with_ai(self, project: Dict) -> str:
-        """Пошли проект в Perplexity для анализа"""
-        prompt = f"""
-        Analyze this project:
-        - Name: {project['name']}
-        - Description: {project['description']}
-        - Status: {project['status']}
-        - Progress: {project['progress']}%
-        
-        Provide:
-        1. Quick assessment
-        2. Risks identified
-        3. Next steps
-        """
-        
-        try:
-            async with aiohttp.ClientSession() as session:
-                headers = {
-                    "Authorization": f"Bearer {PERPLEXITY_API_KEY}",
-                    "Content-Type": "application/json"
-                }
-                payload = {
-                    "model": "sonar-reasoning-pro",
-                    "messages": [{"role": "user", "content": prompt}],
-                    "max_tokens": 500
-                }
-                
-                async with session.post(self.perplexity_url, json=payload, headers=headers) as resp:
-                    if resp.status == 200:
-                        data = await resp.json()
-                        return data["choices"][0]["message"]["content"]
-                    else:
-                        logger.error(f"Perplexity API error: {resp.status}")
-                        return "Analysis failed"
-        except Exception as e:
-            logger.error(f"Error analyzing project: {e}")
-            self.stats["errors"] += 1
-            return f"Error: {str(e)}"
-    
-    async def send_telegram_report(self, project: Dict, analysis: str):
-        """Пошли отчет в Telegram"""
-        try:
-            message = f"""
-            📊 **Batch Analysis Report**
-            
-            **Project:** {project['name']}
-            **Progress:** {project['progress']}%
-            
-            **AI Analysis:**
-            {analysis}
-            
-            ⏰ Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}
-            """
-            
-            await self.bot.send_message(
-                chat_id=DEFAULT_USER_ID,
-                text=message,
-                parse_mode="Markdown"
-            )
-            self.stats["processed"] += 1
-        except Exception as e:
-            logger.error(f"Error sending telegram: {e}")
-            self.stats["errors"] += 1
+        self.supabase = create_client(
+            os.getenv("SUPABASE_URL"),
+            os.getenv("SUPABASE_KEY")
+        )
+        self.perplexity = PerplexityClient(
+            api_key=os.getenv("PERPLEXITY_API_KEY")
+        )
+        self.telegram_bot = telegram.Bot(
+            token=os.getenv("TELEGRAM_BOT_TOKEN")
+        )
     
     async def run(self):
-        """Главный цикл batch analyzer"""
-        logger.info("Starting batch analyzer...")
+        """Main batch analysis function"""
+        # 1. Получи данные нуждающиеся анализа
+        unanalyzed = await self.get_unanalyzed_data()
         
-        projects = await self.get_active_projects()
-        logger.info(f"Found {len(projects)} active projects")
+        # 2. Анализируй с Perplexity
+        results = await self.analyze_with_perplexity(unanalyzed)
         
-        for project in projects:
-            logger.info(f"Analyzing project: {project['name']}")
-            analysis = await self.analyze_project_with_ai(project)
-            await self.send_telegram_report(project, analysis)
+        # 3. Сохрани в Supabase
+        await self.save_results(results)
         
-        # Отправь итоговый отчет
-        duration = (datetime.now() - self.stats["start_time"]).total_seconds()
-        summary = f"""
-        ✅ **Batch Analysis Complete**
+        # 4. Отправь отчет в Telegram
+        await self.send_report(results)
         
-        **Stats:**
-        - Projects processed: {self.stats['processed']}
-        - Errors: {self.stats['errors']}
-        - Duration: {duration:.1f} seconds
-        
-        ⏰ {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}
-        """
-        
-        await self.bot.send_message(
-            chat_id=DEFAULT_USER_ID,
-            text=summary,
-            parse_mode="Markdown"
-        )
-
-async def main():
-    analyzer = BatchAnalyzer()
-    await analyzer.run()
+        print(f"Batch analysis completed: {len(results)} records")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    analyzer = BatchAnalyzer()
+    asyncio.run(analyzer.run())
 ```
 
----
-
-### Этап 3: Docker Image (13:00-14:00)
+### Этап 4: Docker образ (1 час)
 
 **Файл:** `Dockerfile.batch-analyzer`
 
@@ -289,75 +195,98 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Зависимости
+COPY requirements.batch-analyzer.txt .
+RUN pip install --no-cache-dir -r requirements.batch-analyzer.txt
 
-COPY bot/ .
+# Код
+COPY batch_analyzer.py .
+COPY src/ src/
 
 CMD ["python", "batch_analyzer.py"]
 ```
 
-**requirements.txt:**
-```
-aiohttp==3.9.1
-supabase==2.4.0
-python-telegram-bot==21.0
-pydantic==2.5.0
-python-dotenv==1.0.0
-```
+### Этап 5: Docker push в DOCR (30 мин)
 
-**Команды:**
 ```bash
-# Собрать имаж
-docker build -f Dockerfile.batch-analyzer -t registry.digitalocean.com/digital-twin-registry/batch-analyzer:latest .
+# Собрать
+docker build -f Dockerfile.batch-analyzer \
+  -t registry.digitalocean.com/digital-twin-registry/batch-analyzer:v1.0.0 .
 
-# Пушить в registry
-docker push registry.digitalocean.com/digital-twin-registry/batch-analyzer:latest
+# Пушить
+docker push registry.digitalocean.com/digital-twin-registry/batch-analyzer:v1.0.0
+
+# Не u0437абудь login!
+docker login registry.digitalocean.com
 ```
 
----
+### Этап 6: Deploy K8s (1 час)
 
-### Этап 4: K8s Deployment + Testing (14:00-15:00)
-
-**Команды:**
 ```bash
-# Проверить CronJob состояние
+# Примени
+ kubectl apply -f k8s/batch-analyzer-rbac.yaml
+kubectl apply -f k8s/batch-analyzer-cronjob.yaml
+
+# Проверь
 kubectl get cronjobs -n production
 kubectl describe cronjob batch-analyzer -n production
+```
 
-# Мануальное тестирование
+### Этап 7: Monitoring & Testing (1 час)
+
+```bash
+# Ьтестируй вручную (Job выстрелит на 1 мин)
 kubectl create job --from=cronjob/batch-analyzer test-batch -n production
 
-# Мониторить запуск
-kubectl get jobs -n production -w
+# Монитори
 kubectl logs job/test-batch -n production -f
 
-# Проверить ошибки
-kubectl describe pod <pod-name> -n production
+# Посмотри все jobs
+kubectl get jobs -n production
 ```
 
 ---
 
-## ✅ Критерии УСПЕХА
+## Успех Критерии
 
-- [ ] CronJob создан (kubectl get cronjobs)
-- [ ] batch_analyzer.py работает локально
-- [ ] Docker имаж в registry
-- [ ] Job запускается вручную
-- [ ] Telegram отчет получен
-- [ ] Prometheus метрики регистрируются
+- ✅ CronJob состояние: **Active**
+- ✅ Job выполнен: **1 успешная**
+- ✅ Pod logs: **Нет ошибок**
+- ✅ Supabase: **Данные сохранены**
+- ✅ Telegram: **Отчет получен**
 
 ---
 
-## 🔗 Основные ресурсы
+## ПРОИГНОРИРОВАННЫЕ ОШИБки & НАПОМиНАНиЕ
+
+| Ошибка | Решение |
+|:---|:---|
+| Job завешывается | Проверь activeDeadlineSeconds (3600) |
+| ImagePullBackOff | docker login registry.digitalocean.com |
+| Permission denied | Проверь RBAC role |
+| Timeout от API | Ограничь batch_size, увеличь timeout |
+
+---
+
+## ПОЛЕЗНЫЕ ГИТХАб РЕСУРСЫ
 
 - **Kubernetes CronJob:** https://github.com/kubernetes/kubernetes
 - **Kubeflow:** https://github.com/kubeflow/kubeflow
-- **Supabase Python:** https://github.com/supabase/supabase-py
-- **Telegram Bot:** https://github.com/python-telegram-bot/python-telegram-bot
-- **Perplexity API:** https://docs.perplexity.ai
+- **K8s Examples:** https://github.com/kubernetes/examples
 
 ---
 
-**Состояние:** 🟢 READY FOR EXECUTION  
-**Время снова жение:** 7 декабря 2025
+## ЭКСПЕРТЫ
+
+| Отдел | Эксперт | Тема |
+|:---:|:---:|:---:|
+| **INFRA** | Pavel T. | K8s deployment |
+| **INFRA** | Sergey B. | CI/CD integration |
+| **INFRA** | Marina G. | Monitoring CronJob |
+| **AI-ML** | Dmitry K. | Batch analyzer logic |
+
+---
+
+**Статус:** 🟢 READY FOR ASSIGNMENT
+**Дата:** 7 декабря 2025
+**Время на выполнение:** 📅 Среда, 9 дек (09:00-17:00)
