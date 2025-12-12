@@ -47,7 +47,8 @@ jobs:
                               47
                               
                                   # Должны быть полные ссылки с https://
-                                                      if not re.search(r'https://[^/]*github\.com', line):
+                                                      50
+                                                      ][github  ]*github(r'https://[^/]*github\.com', line):
                                       errors.append(f"{filepath}:{i} - Missing https:// in GitHub link")
                                   
                                   # Проверить основной путь (разрешить все GitHub домены)
