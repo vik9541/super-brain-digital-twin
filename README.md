@@ -232,3 +232,6 @@ git push
 
 **Последнее обновление:** 10 декабря 2025, 13:00 MSK
 
+
+
+<!-- Test: workflow validation -->
