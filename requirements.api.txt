@@ -71,3 +71,6 @@ textblob>=0.18.0
 # Job Scheduling
 apscheduler>=3.10.4
 apscheduler>=3.10.4
+
+# GraphQL Server (Phase 6)
+strawberry-graphql[fastapi]>=0.219.0
