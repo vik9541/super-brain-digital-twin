@@ -13,7 +13,6 @@ import os
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import List, Optional, Set
 
@@ -41,79 +40,12 @@ from supabase import Client, create_client
 
 # JWT Authentication
 from .auth import verify_jwt_token
-# from .workspaces.routes import router as workspaces_router  # TODO: Fix circular import
 
-# Logging setup
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-# Global variables for clients (will be initialized in lifespan)
-supabase: Optional[Client] = None
-redis_client: Optional[redis.Redis] = None
-
-# Supabase config
-SUPABASE_URL = os.getenv("SUPABASE_URL", "")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """
-    Lifecycle context manager for FastAPI application.
-    Initializes external service connections on startup and cleans up on shutdown.
-    """
-    global supabase, redis_client
-    
-    logger.info("Starting application...")
-    
-    # Initialize Supabase client
-    try:
-        if SUPABASE_URL and SUPABASE_KEY:
-            supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-            logger.info("Supabase client initialized successfully")
-        else:
-            logger.warning("Supabase credentials not provided - running without Supabase")
-    except Exception as e:
-        logger.error(f"Failed to initialize Supabase client: {e}")
-        supabase = None
-    
-    # Initialize Redis client (optional)
-    try:
-        redis_client = redis.from_url(
-            os.getenv("REDIS_URL", "redis://localhost:6379"),
-            encoding="utf-8",
-            decode_responses=True,
-            socket_connect_timeout=2
-        )
-        # Test connection
-        await redis_client.ping()
-        logger.info("Redis client initialized successfully")
-    except Exception as e:
-        logger.warning(f"Redis not available - {e}")
-        redis_client = None
-    
-    logger.info("Application startup complete")
-    
-    yield  # Application runs here
-    
-    # Cleanup on shutdown
-    logger.info("Shutting down application...")
-    if redis_client:
-        try:
-            await redis_client.close()
-            logger.info("Redis connection closed")
-        except Exception as e:
-            logger.error(f"Error closing Redis: {e}")
-    
-    logger.info("Application shutdown complete")
-
-
-# Initialize FastAPI app with lifespan
+# Initialize FastAPI app
 app = FastAPI(
     title="Super Brain API Extensions",
     description="TASK-005: AI-ML Team API Extensions",
     version="3.0.0",
-    lifespan=lifespan,
 )
 
 # CORS middleware
@@ -125,13 +57,33 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Supabase client placeholder
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "")
+
+# Initialize Supabase client
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 # Rate limiter initialization
 limiter = Limiter(key_func=get_remote_address)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Include workspaces routes (Phase 7.1)
-# app.include_router(workspaces_router)  # TODO: Fix circular import
+# Redis client initialization (optional)
+try:
+    redis_client = redis.from_url(
+        os.getenv("REDIS_URL", "redis://localhost:6379"), 
+        encoding="utf-8", 
+        decode_responses=True,
+        socket_connect_timeout=2  # 2 second timeout
+    )
+except Exception as e:
+    print(f"Warning: Redis not available - {e}")
+    redis_client = None
 
 # ===== ENDPOINT 1: GET /api/v1/analysis/{id} =====
 

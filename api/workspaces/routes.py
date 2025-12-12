@@ -5,7 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from api.auth.dependencies import get_current_user, get_workspace_service
+from api.dependencies import get_current_user, get_workspace_service
 
 from .models import (
     ActivityLogResponse,

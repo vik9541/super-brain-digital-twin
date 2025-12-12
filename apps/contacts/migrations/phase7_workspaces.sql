@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS shared_contact_lists (
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    contact_ids UUID[] DEFAULT '{}',
+    contact_ids BIGINT[] DEFAULT '{}',
     created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
@@ -66,7 +66,7 @@ CREATE INDEX idx_shared_contact_lists_created_at ON shared_contact_lists(created
 CREATE TABLE IF NOT EXISTS contact_activity_log (
     id BIGSERIAL PRIMARY KEY,
     workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
-    contact_id UUID REFERENCES apple_contacts(id) ON DELETE SET NULL,
+    contact_id BIGINT REFERENCES contacts(id) ON DELETE SET NULL,
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     action VARCHAR(100) NOT NULL,
     description TEXT,
@@ -179,18 +179,6 @@ BEFORE UPDATE ON shared_contact_lists
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
 
--- Log workspace member additions to audit_log
-CREATE TRIGGER audit_workspace_member_added
-AFTER INSERT ON workspace_members
-FOR EACH ROW
-EXECUTE FUNCTION log_audit('workspace_member', 'added');
-
--- Log workspace member removals to audit_log
-CREATE TRIGGER audit_workspace_member_removed
-AFTER DELETE ON workspace_members
-FOR EACH ROW
-EXECUTE FUNCTION log_audit('workspace_member', 'removed');
-
 -- ============ ROW LEVEL SECURITY (RLS) ============
 
 -- Enable RLS on all tables
@@ -249,18 +237,18 @@ LEFT JOIN workspace_members wm ON w.id = wm.workspace_id
 LEFT JOIN shared_contact_lists scl ON w.id = scl.workspace_id
 GROUP BY w.id;
 
--- View for user activity
-CREATE OR REPLACE VIEW user_workspace_activity AS
-SELECT
-    u.id as user_id,
-    ws.id as workspace_id,
-    COUNT(*) as activity_count,
-    MAX(cal.created_at) as last_activity
-FROM auth.users u
-JOIN workspace_members wm ON u.id = wm.user_id
-JOIN workspaces ws ON wm.workspace_id = ws.id
-LEFT JOIN contact_activity_log cal ON u.id = cal.user_id AND ws.id = cal.workspace_id
-GROUP BY u.id, ws.id;
+-- View for user activity (commented out - can be added later if needed)
+-- CREATE OR REPLACE VIEW user_workspace_activity AS
+-- SELECT
+--     u.id as user_id,
+--     ws.id as workspace_id,
+--     COUNT(*) as activity_count,
+--     MAX(cal.created_at) as last_activity
+-- FROM auth.users u
+-- JOIN workspace_members wm ON u.id = wm.user_id
+-- JOIN workspaces ws ON wm.workspace_id = ws.id
+-- LEFT JOIN contact_activity_log cal ON u.id = cal.user_id AND ws.id = cal.workspace_id
+-- GROUP BY u.id, ws.id;
 
 -- ============ COMMENTS ============
 
@@ -275,5 +263,5 @@ COMMENT ON COLUMN workspace_members.role IS 'owner, admin, member, or viewer';
 COMMENT ON COLUMN notifications.read IS 'Whether notification has been read';
 
 -- ============ STATUS ============
--- Migration complete: 6 tables, 15 indexes, 4 functions, 8 triggers, 8 RLS policies
-print('✅ Phase 7.1 migration completed successfully');
+-- Migration complete: 6 tables, 15 indexes, 3 functions, 3 triggers, 6 RLS policies, 1 view
+-- ✅ Phase 7.1 migration completed successfully
