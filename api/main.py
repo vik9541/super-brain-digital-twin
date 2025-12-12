@@ -125,7 +125,7 @@ async def get_analysis(
             "updated_at": data.get('updated_at') or datetime.utcnow(),
             "error": None
         }
-                return AnalysisResult(**analysis)
+        return AnalysisResult(**analysis)
     except HTTPException:
         raise
     except Exception as e:
@@ -209,7 +209,6 @@ async def batch_process(request: Request, batch_request: BatchRequest):
     start_time = time.time()
     
     try:
-
         # Prepare batch data for Supabase insert
         batch_records = [
             {**item.data, "id": item.id, "priority": item.priority}
@@ -220,7 +219,7 @@ async def batch_process(request: Request, batch_request: BatchRequest):
         response = supabase.table("contact_analysis").insert(batch_records).execute()
         
         # Process results
-results = [
+        results = [
             BatchItemResult(
                 id=record.get("id"),
                 status="success",
@@ -231,7 +230,8 @@ results = [
         ] if response.data else []
         
         # Handle any items that failed
-        failed = len(batch_request.items) - len(results)        processed = sum(1 for r in results if r.status == "success")
+        failed = len(batch_request.items) - len(results)
+        processed = sum(1 for r in results if r.status == "success")
         failed = sum(1 for r in results if r.status == "failed")
         total_time = (time.time() - start_time) * 1000
         
