@@ -119,7 +119,7 @@ def main():
         results["audit_artifacts"] = {
             "path": args.audit_results,
             "available": True,
-            "note": "Audit results available for enhanced analysis"
+            "note": "Audit results available for enhanced analysis",
         }
     else:
         results["audit_artifacts"] = {"available": False}
