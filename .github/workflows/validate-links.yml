@@ -44,9 +44,10 @@ jobs:
                           
                           for i, line in enumerate(lines, 1):
                               # Проверить формат GitHub ссылок
-                              if 'github.com' in line:
+                              47
+                              
                                   # Должны быть полные ссылки с https://
-                                  if 'https://github.com' not in line:
+                                                      if not re.search(r'https://[^/]*github\.com', line):
                                       errors.append(f"{filepath}:{i} - Missing https:// in GitHub link")
                                   
                                   # Проверить основной путь (разрешить все GitHub домены)
