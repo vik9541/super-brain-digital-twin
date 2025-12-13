@@ -7,10 +7,6 @@ Exports:
     - CacheStats: Cache statistics data model
 """
 
-from api.cache.redis_manager import CacheManager, ContactRecommendation, CacheStats
+from api.cache.redis_manager import CacheManager, CacheStats, ContactRecommendation
 
-__all__ = [
-    "CacheManager",
-    "ContactRecommendation", 
-    "CacheStats"
-]
+__all__ = ["CacheManager", "ContactRecommendation", "CacheStats"]
