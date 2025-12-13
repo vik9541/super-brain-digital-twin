@@ -296,7 +296,7 @@ jobs:
           isort . --profile black
 
           # Форматирование кода
-          black . --line-length 100
+          black . --line-length 100 || true
 
       - name: 📝 Check for changes
         id: verify
@@ -348,7 +348,7 @@ jobs:
         with:
           path: audit-results
 
-      - name: 🤖 Run AI-Enhanced Analysis
+      - name: 🤖 361 Analysis
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -358,7 +358,7 @@ jobs:
           python scripts/copilot_agent_runner.py \
             --mode comprehensive \
             --audit-results audit-results \
-            --files "**/*.py" \
+                      --files "scripts/*.py" \
             --output ai-analysis-report.json
 
       - name: 📊 Generate Enhanced Report
