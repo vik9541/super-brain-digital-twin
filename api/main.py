@@ -41,10 +41,10 @@ from supabase import Client, create_client
 
 # JWT Authentication
 from .auth import verify_jwt_token
+from .ml.routes_gnn import router as gnn_router
 
 # Phase 7.2: WebSocket real-time sync
 from .realtime.routes import router as realtime_router
-from .ml.routes_gnn import router as gnn_router
 
 # from .workspaces.routes import router as workspaces_router  # TODO: Fix circular import
 
@@ -502,4 +502,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
