@@ -7,8 +7,9 @@ Author: Super Brain Team
 Created: 2025-12-13
 """
 
-from fastapi import APIRouter, HTTPException, Depends
 import logging
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from api.analytics.metrics import AnalyticsMetrics
 from api.core.supabase_client import get_current_user
@@ -20,7 +21,8 @@ router = APIRouter(prefix="/api/analytics", tags=["Analytics"])
 
 async def get_analytics_manager() -> AnalyticsMetrics:
     """Get AnalyticsMetrics from app state"""
-    from api.main import app, supabase
+    from api.main import supabase
+
     if not supabase:
         raise HTTPException(status_code=500, detail="Database not initialized")
     return AnalyticsMetrics(supabase)
@@ -30,11 +32,11 @@ async def get_analytics_manager() -> AnalyticsMetrics:
 async def get_analytics_metrics(
     workspace_id: str,
     analytics: AnalyticsMetrics = Depends(get_analytics_manager),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """
     Get all analytics metrics
-    
+
     Returns CLV, health score, engagement trends, top contacts
     """
     try:
@@ -49,7 +51,7 @@ async def get_analytics_metrics(
 async def get_clv_metrics(
     workspace_id: str,
     analytics: AnalyticsMetrics = Depends(get_analytics_manager),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get Contact Lifetime Value metrics"""
     try:
@@ -64,7 +66,7 @@ async def get_clv_metrics(
 async def get_health_score(
     workspace_id: str,
     analytics: AnalyticsMetrics = Depends(get_analytics_manager),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get Relationship Health Score"""
     try:
@@ -80,7 +82,7 @@ async def get_engagement_trends(
     workspace_id: str,
     days: int = 30,
     analytics: AnalyticsMetrics = Depends(get_analytics_manager),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get engagement trends over time"""
     try:
@@ -96,7 +98,7 @@ async def get_top_contacts(
     workspace_id: str,
     limit: int = 10,
     analytics: AnalyticsMetrics = Depends(get_analytics_manager),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get top performing contacts"""
     try:

@@ -1,11 +1,12 @@
 """Gmail Routes API - Phase 9 Day 6-7"""
 
-from fastapi import APIRouter, HTTPException, Depends, Request
-from pydantic import BaseModel
 import logging
 
-from api.integrations.gmail_sync import GmailSyncManager
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+
 from api.core.supabase_client import get_current_user
+from api.integrations.gmail_sync import GmailSyncManager
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ class SyncRequest(BaseModel):
 async def get_gmail_manager() -> GmailSyncManager:
     """Get GmailSyncManager from app state"""
     from api.main import supabase
+
     if not supabase:
         raise HTTPException(status_code=500, detail="Database not initialized")
     return GmailSyncManager(supabase)
@@ -28,7 +30,7 @@ async def get_gmail_manager() -> GmailSyncManager:
 @router.get("/connect")
 async def get_gmail_connect_url(
     gmail: GmailSyncManager = Depends(get_gmail_manager),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get OAuth URL to connect Gmail"""
     try:
@@ -43,7 +45,7 @@ async def get_gmail_connect_url(
 async def gmail_oauth_callback(
     code: str,
     gmail: GmailSyncManager = Depends(get_gmail_manager),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Handle OAuth callback from Google"""
     try:
@@ -61,14 +63,12 @@ async def gmail_oauth_callback(
 async def sync_gmail_contacts(
     request: SyncRequest,
     gmail: GmailSyncManager = Depends(get_gmail_manager),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Manually trigger Gmail sync"""
     try:
         result = await gmail.sync_contacts_and_interactions(
-            current_user["id"],
-            request.workspace_id,
-            request.max_emails
+            current_user["id"], request.workspace_id, request.max_emails
         )
         return result
     except Exception as e:
@@ -79,7 +79,7 @@ async def sync_gmail_contacts(
 @router.get("/status")
 async def get_gmail_status(
     gmail: GmailSyncManager = Depends(get_gmail_manager),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Get Gmail connection status"""
     try:
@@ -93,7 +93,7 @@ async def get_gmail_status(
 @router.delete("/disconnect")
 async def disconnect_gmail(
     gmail: GmailSyncManager = Depends(get_gmail_manager),
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
 ):
     """Disconnect Gmail integration"""
     try:
