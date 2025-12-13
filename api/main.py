@@ -44,6 +44,7 @@ from .auth import verify_jwt_token
 
 # Phase 7.2: WebSocket real-time sync
 from .realtime.routes import router as realtime_router
+from .ml.routes_gnn import router as gnn_router
 
 # from .workspaces.routes import router as workspaces_router  # TODO: Fix circular import
 
@@ -140,6 +141,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Phase 7.2: WebSocket real-time routes
 app.include_router(realtime_router)
+
+# Phase 8: GNN Recommendations
+app.include_router(gnn_router)
 
 # ===== ENDPOINT 1: GET /api/v1/analysis/{id} =====
 
@@ -498,3 +502,4 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
