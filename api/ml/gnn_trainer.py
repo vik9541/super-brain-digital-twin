@@ -64,8 +64,8 @@ class GNNTrainer:
         neg_loss = 0
 
         for _ in range(negative_samples):
-            # Random negative pairs
-            neg_idx = torch.randperm(num_nodes, device=self.device)[: len(pos_src)]
+            # Random negative pairs - sample len(pos_src) random node indices
+            neg_idx = torch.randint(0, num_nodes, (len(pos_src),), device=self.device)
 
             neg_scores = F.cosine_similarity(embeddings[pos_src], embeddings[neg_idx], dim=1)
 
