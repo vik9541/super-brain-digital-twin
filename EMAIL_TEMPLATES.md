@@ -35,7 +35,7 @@ Would you be open to a 20-minute call or async feedback via email? I've prepared
 No pressure at all – even a quick email with your thoughts would be incredibly helpful.
 
 ## Resources
-• GitHub: github.com/vik9541/super-brain-digital-twin
+• Github: https://github.com/vik9541/super-brain-digital-twin
 • Product Spec: [Attach PDF or link]
 • GNN Technical Report: [Link to PHASE8_GNN_REPORT.md]
 
@@ -95,7 +95,7 @@ Would you be open to:
 ## Resources
 • One-pager: [Attach PDF]
 • Product spec: [Link]
-• GitHub: github.com/vik9541/super-brain-digital-twin
+• Github: https://github.com/vik9541/super-brain-digital-twin
 • Demo video: [Coming soon]
 
 Thank you for your time. I respect how valuable it is.
@@ -141,7 +141,7 @@ If your feedback shapes the product, I'd love to:
 
 ## Resources
 • Product spec (3,000 words): [Link]
-• GitHub: github.com/vik9541/super-brain-digital-twin
+• Github: https://github.com/vik9541/super-brain-digital-twin
 • Technical deep dive: PHASE8_GNN_REPORT.md
 
 Would you be open to a quick async review via email? Even 5 minutes of your time would help tremendously.
@@ -209,7 +209,7 @@ No pressure – even if advisory isn't a fit, I'd still love your one-time feedb
 
 ## Resources
 • Product spec: [Link]
-• GitHub: github.com/vik9541/super-brain-digital-twin
+• Github: https://github.com/vik9541/super-brain-digital-twin
 • One-pager: [Attach PDF]
 
 Thank you for considering this!
@@ -276,7 +276,7 @@ No pressure – but I think you'll find this genuinely useful.
 Best,
 [Your Name]
 
-P.S. We're open source! GitHub: github.com/vik9541/super-brain-digital-twin
+P.S. We're open source! Github: https://github.com/vik9541/super-brain-digital-twin
 ```
 
 ---
@@ -375,7 +375,7 @@ Would you be open to a 15-min call next week?
 
 ## Resources (If You Want to Dig In)
 • Product spec: [Link]
-• GitHub: github.com/vik9541/super-brain-digital-twin
+• Github: https://github.com/vik9541/super-brain-digital-twin
 • One-pager: [Attach PDF]
 
 Thanks to [Mutual connection] for the intro!
