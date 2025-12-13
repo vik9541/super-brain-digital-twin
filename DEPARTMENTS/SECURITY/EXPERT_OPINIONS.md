@@ -48,8 +48,7 @@
   6. Vendor Management
 
 🔗 Ресурсы:
-  - https://github.com/nist-cybersecurity (NIST framework)
-```
+    - https://github.com/usnistgov/oscal-content (NIST Cybersecurity Framework)```
 
 #### 3. Threat Modeling
 ```
