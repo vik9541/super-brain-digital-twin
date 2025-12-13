@@ -1,0 +1,27 @@
+﻿# Строки для добавления в api/main.py:
+
+# 1. осле импорта gnn_router (строка ~48):
+from .routes_cache import router as cache_router
+
+# 2.  функции lifespan, после инициализации redis_client (строка ~102):
+    # Phase 9: Initialize Cache Manager
+    from .cache import CacheManager
+    if redis_client:
+        try:
+            cache_manager = CacheManager(
+                redis_client=redis_client,
+                default_ttl=86400,  # 24 hours
+                key_prefix='superbrain'
+            )
+            app.state.cache_manager = cache_manager
+            logger.info('Cache Manager initialized successfully')
+        except Exception as e:
+            logger.error(f'Failed to initialize Cache Manager: {e}')
+            app.state.cache_manager = None
+    else:
+        logger.warning('Redis not available - cache disabled')
+        app.state.cache_manager = None
+
+# 3. осле app.include_router(gnn_router) (строка ~148):
+# Phase 9: Cache API routes
+app.include_router(cache_router)
