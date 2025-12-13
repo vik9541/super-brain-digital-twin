@@ -34,7 +34,7 @@ Example:
 ## Current Status:
 - Phase 8 complete (GNN implementation)
 - 17,500 LOC production code
-- Open source: github.com/vik9541/super-brain-digital-twin
+- Open source: https://github.com/vik9541/super-brain-digital-twin
 - Seeking feedback before building Phase 9
 
 ## Roadmap (based on your feedback):
@@ -114,7 +114,7 @@ Too high? Too low? What would you pay?
 4. Biggest concerns?
 
 Full product spec: [Link]
-GitHub: github.com/vik9541/super-brain-digital-twin
+GitHub: https://github.com/vik9541/super-brain-digital-twin
 
 Roast me! 🔥
 ```
@@ -158,7 +158,7 @@ Traditional recommender systems treat items independently. But contact networks 
 - Full test coverage (42 tests, 1,258 LOC)
 
 ## Code
-- Open source: github.com/vik9541/super-brain-digital-twin
+- Open source: https://github.com/vik9541/super-brain-digital-twin
 - Files: api/ml/gnn_*.py
 - Tests: tests/test_gnn*.py
 
@@ -260,7 +260,7 @@ Too high? Too low? What would YOU pay?
 
 10/ Want to help?
 
-⭐ Star on GitHub: github.com/vik9541/super-brain-digital-twin
+⭐ Star on GitHub: https://github.com/vik9541/super-brain-digital-twin
 💬 Share feedback: [Discussion link]
 🎥 Watch demo: [YouTube link - coming soon]
 📧 Get early access: [Email]
@@ -333,7 +333,7 @@ An AI-powered contact management platform that uses Graph Neural Networks to hel
 5. Any concerns we should address
 
 ## Try It
-- GitHub: github.com/vik9541/super-brain-digital-twin
+- GitHub: https://github.com/vik9541/super-brain-digital-twin
 - Product Spec: [Link]
 - Demo: [Coming soon]
 
@@ -451,7 +451,7 @@ Users don't trust "black box" recommendations. We provide:
 
 ## 🔍 Code Walkthrough
 
-**GNN Model** ([gnn_model.py](https://github.com/vik9541/super-brain-digital-twin/blob/main/api/ml/gnn_model.py)):
+**GNN Model** ([gnn_model.py](https://https://github.com/vik9541/super-brain-digital-twin/blob/main/api/ml/gnn_model.py)):
 ```python
 class ContactRecommenderGNN(torch.nn.Module):
     def __init__(self, in_features=3, hidden_dim=64, out_dim=128):
@@ -482,7 +482,7 @@ class ContactRecommenderGNN(torch.nn.Module):
         return top_k
 ```
 
-**Trainer** ([gnn_trainer.py](https://github.com/vik9541/super-brain-digital-twin/blob/main/api/ml/gnn_trainer.py)):
+**Trainer** ([gnn_trainer.py](https://https://github.com/vik9541/super-brain-digital-twin/blob/main/api/ml/gnn_trainer.py)):
 ```python
 async def train(self, graph_data, epochs=20):
     optimizer = torch.optim.Adam(self.model.parameters(), lr=0.01)
@@ -496,7 +496,7 @@ async def train(self, graph_data, epochs=20):
         optimizer.step()
 ```
 
-**API Endpoint** ([routes_gnn.py](https://github.com/vik9541/super-brain-digital-twin/blob/main/api/ml/routes_gnn.py)):
+**API Endpoint** ([routes_gnn.py](https://https://github.com/vik9541/super-brain-digital-twin/blob/main/api/ml/routes_gnn.py)):
 ```python
 @router.get("/recommendations/{workspace_id}/{contact_id}")
 async def get_recommendations(workspace_id: str, contact_id: str, k: int = 20):
@@ -532,7 +532,7 @@ Based on community feedback, we'll prioritize:
 ## 🤝 Open Source
 
 Full codebase on GitHub:
-- Repo: [github.com/vik9541/super-brain-digital-twin](https://github.com/vik9541/super-brain-digital-twin)
+- Repo: [https://github.com/vik9541/super-brain-digital-twin](https://https://github.com/vik9541/super-brain-digital-twin)
 - GNN Implementation: `api/ml/gnn_*.py`
 - Tests: `tests/test_gnn*.py`
 - Documentation: `PHASE8_GNN_REPORT.md`
