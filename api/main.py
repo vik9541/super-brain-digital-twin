@@ -7,47 +7,25 @@ Endpoints:
 4. WebSocket /api/v1/live-events - Real-time events
 """
 
-import asyncio
 import logging
 import os
-import time
-import uuid
-from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
-from datetime import datetime
-from typing import List, Optional, Set
-
-import psutil
+from typing import Optional
 
 # Redis for caching
 import redis.asyncio as redis
 from fastapi import (
-    Depends,
     FastAPI,
-    HTTPException,
-    Path,
-    Request,
-    WebSocket,
-    WebSocketDisconnect,
 )
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
 
 # Rate Limiting
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 from supabase import Client, create_client
 
 # JWT Authentication
-from .auth import verify_jwt_token
-from .ml.routes_gnn import router as gnn_router
 
 # Phase 9: Cache API routes
-from .routes_cache import router as cache_router
 
 # Phase 7.2: WebSocket real-time sync
-from .realtime.routes import router as realtime_router
 
 # from .workspaces.routes import router as workspaces_router  # TODO: Fix circular import
 
@@ -103,38 +81,35 @@ async def lifespan(app: FastAPI):
 
         # Phase 9: Initialize Cache Manager
     from .cache import CacheManager
+
     if redis_client:
         try:
             cache_manager = CacheManager(
-                redis_client=redis_client,
-                default_ttl=86400,  # 24 hours
-                key_prefix='superbrain'
+                redis_client=redis_client, default_ttl=86400, key_prefix="superbrain"  # 24 hours
             )
             app.state.cache_manager = cache_manager
-            logger.info('Phase 9: Cache Manager initialized (4x performance boost)')
+            logger.info("Phase 9: Cache Manager initialized (4x performance boost)")
         except Exception as e:
-            logger.error(f'Failed to initialize Cache Manager: {e}')
+            logger.error(f"Failed to initialize Cache Manager: {e}")
             app.state.cache_manager = None
     else:
-        logger.warning('Redis not available - cache disabled')
+        logger.warning("Redis not available - cache disabled")
         app.state.cache_manager = None
-
 
     # Phase 9: Initialize Cache Manager
     from .cache import CacheManager
+
     if redis_client:
         try:
             cache_manager = CacheManager(
-                redis_client=redis_client,
-                default_ttl=86400,  # 24 hours
-                key_prefix='superbrain'
+                redis_client=redis_client, default_ttl=86400, key_prefix="superbrain"  # 24 hours
             )
             app.state.cache_manager = cache_manager
-            logger.info('Phase 9: Cache Manager initialized (4x performance)')
+            logger.info("Phase 9: Cache Manager initialized (4x performance)")
         except Exception as e:
-            logger.error(f'Failed to initialize Cache Manager: {e}')
+            logger.error(f"Failed to initialize Cache Manager: {e}")
             app.state.cache_manager = None
     else:
-        logger.warning('Redis not available - cache disabled')
+        logger.warning("Redis not available - cache disabled")
         app.state.cache_manager = None
     logger.info("Application startup complete")
