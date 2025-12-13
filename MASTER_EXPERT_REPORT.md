@@ -177,7 +177,7 @@
 - https://github.com/bkimminich/juice-shop - Vulnerable app (learning)
 
 #### Compliance & Frameworks
-- https://github.com/nist-cybersecurity - NIST framework
+- https://www.nist.gov/cyberframework - NIST framework
 - https://github.com/microsoft/threat-modeling-templates - Threat modeling
 - https://github.com/attack-navigator/attack-navigator - MITRE ATT&CK
 
