@@ -122,12 +122,27 @@ class ClarifyRequest(BaseModel):
 # DATABASE CONNECTION
 # ============================================================================
 
+# Глобальный DB pool (создается один раз при старте)
+_db_pool: Optional[asyncpg.Pool] = None
+
 async def get_db_pool():
     """Получить connection pool к БД"""
-    if not DATABASE_URL:
-        raise ValueError("DATABASE_URL not configured")
+    global _db_pool
     
-    return await asyncpg.create_pool(DATABASE_URL)
+    if _db_pool is None:
+        if not DATABASE_URL:
+            raise ValueError("DATABASE_URL not configured")
+        
+        # Настройки для Supabase pooler (pgbouncer)
+        _db_pool = await asyncpg.create_pool(
+            DATABASE_URL,
+            min_size=1,
+            max_size=5,
+            server_settings={'jit': 'off'}  # Required for pgbouncer
+        )
+        logger.info("✅ Database pool created")
+    
+    return _db_pool
 
 # ============================================================================
 # HELPER FUNCTIONS
@@ -672,9 +687,6 @@ async def telegram_webhook(update: TelegramUpdate, background_tasks: BackgroundT
         logger.error(f"❌ Error processing message: {e}", exc_info=True)
         await send_to_telegram(f"❌ Ошибка обработки сообщения: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
-    
-    finally:
-        await pool.close()
 
 @router.post("/inbox/{inbox_id}/clarify")
 async def clarify_inbox(inbox_id: UUID, request: ClarifyRequest):
