@@ -77,6 +77,15 @@ app.add_middleware(
 app.include_router(victor_router)
 
 # ============================================================================
+# HEALTH CHECK ENDPOINT (for Kubernetes)
+# ============================================================================
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for Kubernetes liveness/readiness probes"""
+    return {"status": "ok"}
+
+# ============================================================================
 # ROOT ENDPOINT
 # ============================================================================
 
