@@ -1,8 +1,6 @@
-"""Phase 4: SUPER BRAIN v4.0 - Universal Telegram Bot Handler
-Intent-driven architecture: Bot handles ANY message/file without specific commands
-Based on SUPER_BRAIN_FLEXIBLE_TZ_v4.0.md
-
-🆕 FIX: Added photo/document processing with Base64 encoding for Perplexity AI
+﻿"""
+SUPER BRAIN v4.0 - Telegram Bot Handler
+Universal message processing with Perplexity AI integration
 """
 
 import asyncio
@@ -11,99 +9,96 @@ import datetime
 import json
 import logging
 import os
+from pathlib import Path
+
+# Load environment variables from .env file
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 import httpx
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import Message
 
-# Configure logging
+# ============================================
+# CONFIGURATION
+# ============================================
+
+BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+N8N_WEBHOOK_BASE = os.getenv("N8N_WEBHOOK_BASE", "https://lavrentev.app.n8n.cloud/webhook")
+UNIVERSAL_WORKFLOW_URL = f"{N8N_WEBHOOK_BASE}/universal"
+PERPLEXITY_API_KEY = os.getenv("PERPLEXITY_API_KEY", "")
+
+# Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Bot configuration
-BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8326941950:AAHx7hj1JcJLeQl8eS5sTFlkLJ5S3ZM|L5p3BZoVE")
-N8N_WEBHOOK_BASE = os.getenv("N8N_WEBHOOK_BASE", "https://lavrentev.app.n8n.cloud/webhook")
 
 # Initialize bot and dispatcher
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
-# N8N Universal Workflow (renamed from digital-twin-ask)
-UNIVERSAL_WORKFLOW_URL = f"{N8N_WEBHOOK_BASE}/digital-twin-ask"
-
-# Conversation context storage (simplified, should use Redis/Supabase in production)
+# In-memory conversation context
 conversation_contexts = {}
 
 # ============================================
 # SUPABASE CLIENT FOR RAW DATA STORAGE
 # ============================================
-try:
-    from supabase import Client, create_client
 
+supabase = None
+try:
+    from supabase import create_client, Client
     SUPABASE_URL = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
-    supabase: Client = (
-        create_client(SUPABASE_URL, SUPABASE_KEY) if SUPABASE_URL and SUPABASE_KEY else None
-    )
-    logger.info(
-        f"📊 Supabase RAW storage: {'✅ Enabled' if supabase else '⚠️ Disabled (env vars missing)'}"
-    )
-except ImportError:
-    supabase = None
-    logger.warning("⚠️ Supabase not installed - RAW data storage disabled")
+    
+    if SUPABASE_URL and SUPABASE_KEY:
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        logger.info(f"Supabase RAW storage: ENABLED ({SUPABASE_URL})")
+    else:
+        logger.warning("Supabase: env vars missing - RAW data storage disabled")
+except ImportError as e:
+    logger.warning(f"Supabase not installed - RAW data storage disabled: {e}")
+except Exception as e:
+    logger.error(f"Supabase init error: {e}")
 
 
-async def download_file_as_base64(file_id: str, file_type: str = "photo") -> str:
-    """
-    Download file from Telegram and convert to Base64 for Perplexity AI
-    """
+# ============================================
+# HELPER FUNCTIONS
+# ============================================
+
+async def download_file_as_base64(file_id: str, file_type: str = "photo") -> str | None:
+    """Download file from Telegram and convert to Base64"""
     try:
-        # Get file info from Telegram
         file = await bot.get_file(file_id)
         file_path = file.file_path
-
-        # Download file
         file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
+        
         async with httpx.AsyncClient() as client:
             response = await client.get(file_url)
             response.raise_for_status()
-
-            # Convert to Base64
             file_bytes = response.content
             base64_data = base64.b64encode(file_bytes).decode("utf-8")
-
-            logger.info(
-                f"✅ Downloaded {file_type}: {len(file_bytes)} bytes -> {len(base64_data)} base64 chars"
-            )
+            logger.info(f"Downloaded {file_type}: {len(file_bytes)} bytes")
             return base64_data
     except Exception as e:
-        logger.error(f"❌ Failed to download file {file_id}: {e}")
+        logger.error(f"Failed to download file {file_id}: {e}")
         return None
 
 
-async def save_raw_message(message: Message, message_type: str, reply_to_id: int = None):
-    """
-    Save RAW message data to Supabase for later batch analysis
-    """
+async def save_raw_message(message: Message, message_type: str, reply_to_id: int | None = None):
+    """Save RAW message to Supabase"""
     if not supabase:
         return None
-
+        
     try:
-        # Prepare RAW JSON data
         raw_json = {
             "message_id": message.message_id,
             "chat_id": message.chat.id,
-            "user": message.from_user.to_python() if message.from_user else None,
+            "user": message.from_user.model_dump() if message.from_user else None,
             "date": message.date.isoformat() if message.date else None,
             "text": message.text,
             "caption": message.caption,
-            "reply_to_message_id": (
-                message.reply_to_message.message_id if message.reply_to_message else None
-            ),
         }
-
-        # Extract message text based on type
+        
         msg_text = ""
         if message.text:
             msg_text = message.text
@@ -114,61 +109,20 @@ async def save_raw_message(message: Message, message_type: str, reply_to_id: int
         elif message_type == "document" and message.document:
             msg_text = f"[Document: {message.document.file_name}]"
         elif message_type == "photo":
-            # 🆕 Include caption with photo
             msg_text = message.caption if message.caption else "[Photo]"
-
-        # Insert into raw_messages table
-        result = (
-            supabase.table("raw_messages")
-            .insert(
-                {
-                    "user_id": message.from_user.id,
-                    "message_id": message.message_id,
-                    "chat_id": message.chat.id,
-                    "message_text": msg_text,
-                    "message_type": message_type,
-                    "reply_to_message_id": reply_to_id,
-                    "raw_telegram_json": raw_json,
-                    "received_at": datetime.datetime.now().isoformat(),
-                    "is_processed": False,
-                }
-            )
-            .execute()
-        )
-
-        # Save file info if present
-        if message.document:
-            supabase.table("raw_files").insert(
-                {
-                    "message_id": message.message_id,
-                    "file_id": message.document.file_id,
-                    "file_type": "document",
-                    "file_name": message.document.file_name,
-                    "file_size": message.document.file_size,
-                    "mime_type": message.document.mime_type,
-                }
-            ).execute()
-        elif message.voice:
-            supabase.table("raw_files").insert(
-                {
-                    "message_id": message.message_id,
-                    "file_id": message.voice.file_id,
-                    "file_type": "voice",
-                    "file_size": message.voice.file_size,
-                    "mime_type": message.voice.mime_type,
-                }
-            ).execute()
-        elif message.photo:
-            photo = message.photo[-1]  # Get largest photo
-            supabase.table("raw_files").insert(
-                {
-                    "message_id": message.message_id,
-                    "file_id": photo.file_id,
-                    "file_type": "photo",
-                    "file_size": photo.file_size,
-                }
-            ).execute()
-
+        
+        result = supabase.table("raw_messages").insert({
+            "user_id": message.from_user.id,
+            "message_id": message.message_id,
+            "chat_id": message.chat.id,
+            "message_text": msg_text,
+            "message_type": message_type,
+            "reply_to_message_id": reply_to_id,
+            "raw_telegram_json": raw_json,
+            "received_at": datetime.datetime.now().isoformat(),
+            "is_processed": False,
+        }).execute()
+        
         return result.data[0] if result.data else None
     except Exception as e:
         logger.error(f"Failed to save RAW message: {e}")
@@ -176,284 +130,181 @@ async def save_raw_message(message: Message, message_type: str, reply_to_id: int
 
 
 async def analyze_message_intent(message_data: dict) -> dict:
-    """
-    Send message to Perplexity AI via N8N for intent analysis
-    Returns: {intent, action, confidence, questions, answer}
-    """
+    """Send message to N8N/Perplexity AI for analysis"""
     try:
-        async with httpx.AsyncClient(
-            timeout=60.0
-        ) as client:  # 🆕 Increased timeout for image processing
+        async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(UNIVERSAL_WORKFLOW_URL, json=message_data)
             response.raise_for_status()
-
-            # 🆕 Handle empty or non-JSON responses
+            
             if not response.content:
-                return {
-                    "error": "Empty response from N8N",
-                    "confidence": 0,
-                    "answer": "❌ Получен пустой ответ от сервера",
-                }
-
+                return {"error": "Empty response", "confidence": 0, "answer": "Пустой ответ от сервера"}
+            
             try:
                 return response.json()
-            except json.JSONDecodeError as json_err:
-                logger.error(
-                    f"JSON decode error: {json_err}. Response content: {response.text[:500]}"
-                )
-                return {
-                    "error": f"Invalid JSON: {str(json_err)}",
-                    "confidence": 0,
-                    "answer": f"❌ Ошибка обработки: {response.text[:200]}",
-                }
+            except json.JSONDecodeError:
+                return {"error": "Invalid JSON", "confidence": 0, "answer": f"Ошибка: {response.text[:200]}"}
     except Exception as e:
-        logger.error(f"Perplexity AI analysis error: {e}")
-        return {
-            "error": str(e),
-            "confidence": 0,
-            "answer": f"❌ Произошла ошибка при обработке: {str(e)}",
-        }
+        logger.error(f"Analysis error: {e}")
+        return {"error": str(e), "confidence": 0, "answer": f"Ошибка: {str(e)}"}
 
 
 async def handle_universal_message(message: Message):
-    """
-    Universal handler for ANY message type (text, file, voice, photo)
-    This is the CORE of SUPER BRAIN v4.0 architecture
-
-    🆕 FIXED: Now properly handles photos with Base64 encoding
-    """
+    """Universal handler for ANY message type"""
     user_id = message.from_user.id
-
-    # Extract message content
+    
     message_text = ""
     message_type = "text"
     file_data = None
-
+    
     if message.text:
         message_text = message.text
         message_type = "text"
     elif message.voice:
-        message_text = "[Voice message received]"
+        message_text = "[Voice message]"
         message_type = "voice"
-        # 🆕 Download voice file
         file_data = await download_file_as_base64(message.voice.file_id, "voice")
     elif message.document:
         message_text = f"[Document: {message.document.file_name}]"
         message_type = "document"
-        # 🆕 Download document file
         file_data = await download_file_as_base64(message.document.file_id, "document")
     elif message.photo:
-        # 🆕 CRITICAL FIX: Process photo with caption
-        photo = message.photo[-1]  # Get highest resolution
-        message_text = (
-            message.caption
-            if message.caption
-            else "[Photo received - please analyze what you see in this image]"
-        )
+        photo = message.photo[-1]
+        message_text = message.caption if message.caption else "[Photo]"
         message_type = "photo"
-        # 🆕 Download and encode photo
         file_data = await download_file_as_base64(photo.file_id, "photo")
-
         if not file_data:
-            await message.answer("❌ Не удалось загрузить фото. Попробуйте еще раз.")
+            await message.answer("Не удалось загрузить фото")
             return
-
-    # 🆕 RAW DATA STORAGE: Save message for batch analysis
+    
     reply_to_id = message.reply_to_message.message_id if message.reply_to_message else None
     await save_raw_message(message, message_type, reply_to_id)
-
-    # Get conversation context
+    
     context = conversation_contexts.get(user_id, [])
-
-    # Prepare data for Perplexity AI analysis
+    
     analysis_data = {
         "message": message_text,
         "message_type": message_type,
         "user_id": user_id,
         "chat_id": message.chat.id,
-        "context": context[-3:] if len(context) > 0 else [],  # Last 3 messages for context
+        "context": context[-3:],
         "request_type": "universal_analysis",
     }
-
-    # 🆕 Add file data if present (Base64 encoded)
+    
     if file_data:
         analysis_data["file_base64"] = file_data
         analysis_data["has_file"] = True
-        logger.info(
-            f"📎 Sending {message_type} with file_base64 ({len(file_data)} chars) to Perplexity AI"
-        )
-
-    # Send "thinking" message
-    status_msg = await message.answer("🧠 Анализирую...")
-
-    # Analyze via Perplexity AI
+    
+    status_msg = await message.answer("Анализирую...")
     result = await analyze_message_intent(analysis_data)
-
-    # Update conversation context
+    
     if user_id not in conversation_contexts:
         conversation_contexts[user_id] = []
     conversation_contexts[user_id].append({"role": "user", "content": message_text})
-
-    # Handle result
+    
     if "error" in result:
-        await status_msg.edit_text(result.get("answer", "❌ Ошибка обработки"))
+        await status_msg.edit_text(result.get("answer", "Ошибка"))
         return
-
-    # Extract AI response
-    answer = result.get("answer", "Не могу определить, что нужно сделать. Уточните, пожалуйста?")
+    
+    answer = result.get("answer", "Не понял. Уточните?")
     confidence = result.get("confidence", 0)
     questions = result.get("questions", [])
-
-    # Save AI response to context
+    
     conversation_contexts[user_id].append({"role": "assistant", "content": answer})
-
-    # Send response
     await status_msg.edit_text(answer)
-
-    # 🆕 Save bot response to database
-    if supabase:
-        try:
-            supabase.table("bot_responses").insert(
-                {
-                    "reply_to_message_id": message.message_id,
-                    "response_text": answer,
-                    "bot_message_id": status_msg.message_id,
-                    "sent_at": datetime.datetime.now().isoformat(),
-                    "is_error": False,
-                }
-            ).execute()
-        except Exception as e:
-            logger.error(f"Failed to save bot response: {e}")
-
-    # If AI needs clarification (confidence < 80% or has questions)
+    
     if confidence < 80 and questions:
-        clarification_text = "\n\n❓ У меня есть уточняющие вопросы:\n"
+        clarification = "\n\nУточняющие вопросы:\n"
         for i, q in enumerate(questions, 1):
-            clarification_text += f"{i}. {q}\n"
-        await message.answer(clarification_text)
+            clarification += f"{i}. {q}\n"
+        await message.answer(clarification)
 
 
 # ============================================
-# COMMAND HANDLERS (for basic navigation)
+# COMMAND HANDLERS
 # ============================================
-
 
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
-    """Handle /start command"""
     text = """
-🧠 Добро пожаловать в SUPER BRAIN v4.0!
+Добро пожаловать в SUPER BRAIN v4.0!
 
-Я - ваш умный AI-ассистент на базе Perplexity AI.
+Я - AI-ассистент на базе Perplexity AI.
 
-✨ **Просто отправьте мне:**
-• Любой текст или вопрос
-• Файл (документ, фото)
-• Голосовое сообщение
-
-🖼️ **🆕 Теперь я могу анализировать фотографии!**
-Отправьте фото + текст, например:
-"на фото, я получающий диплом"
-
-🤖 Если не понимаю - задам уточняющие вопросы.
+Просто отправьте мне:
+- Любой текст или вопрос
+- Файл (документ, фото)
+- Голосовое сообщение
 
 Команды:
-/help - показать помощь
-/status - проверить статус
-
-Приступим! 🚀
-    """
+/help - помощь
+/status - статус систем
+"""
     await message.answer(text)
 
 
 @dp.message(Command("help"))
 async def cmd_help(message: Message):
-    """Handle /help command"""
     text = """
-📚 **SUPER BRAIN v4.0 - Помощь**
+SUPER BRAIN v4.0 - Помощь
 
-**Концепция:**
-Вам НЕ нужны специальные команды!
-Просто общайтесь естественно:
+Вам НЕ нужны команды!
+Просто пишите естественно:
+- "Встреча завтра с Иваном"
+- Загрузите файл
+- Отправьте голосовое
 
-✅ "Встреча завтра с Иваном"
-✅ [загрузить счет.pdf]
-✅ [отправить голосовое]
-✅ [отправить фото + "на фото..."] 🆕
-✅ "Сколько я потратил на проект?"
-
-🤖 Я понимаю контекст и задаю вопросы если нужно.
-
-**Команды навигации:**
 /start - начать
-/help - эта справка
-/status - проверить работу систем
-
-**Powered by Perplexity AI** 🚀
-    """
+/help - помощь
+/status - статус
+"""
     await message.answer(text)
 
 
 @dp.message(Command("status"))
 async def cmd_status(message: Message):
-    """Handle /status command"""
+    n8n_status = "UNKNOWN"
     try:
-        # Ping N8N webhook
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(
-                f"{N8N_WEBHOOK_BASE.replace('/webhook', '')}/healthz", follow_redirects=True
-            )
-            n8n_status = (
-                "🟢 OK" if response.status_code in [200, 404] else "🔴 ERROR"
-            )  # 404 is ok, means N8N is up
+            response = await client.get(f"{N8N_WEBHOOK_BASE.replace('/webhook', '')}/healthz", follow_redirects=True)
+            n8n_status = "OK" if response.status_code in [200, 404] else "ERROR"
     except:
-        n8n_status = "🟡 UNKNOWN"
-
-    supabase_status = "🟢 Connected" if supabase else "🟡 Disabled"
-
+        pass
+    
+    supabase_status = "Connected" if supabase else "Disabled"
+    perplexity_status = "OK" if PERPLEXITY_API_KEY else "No API Key"
+    
     text = f"""
-📊 **Статус Системы**
+Статус Системы
 
-🤖 **Bot:** 🟢 Работает
-🔗 **N8N Workflows:** {n8n_status}
-🧠 **Perplexity AI:** 🟢 Активен
-💾 **Database:** {supabase_status}
-🖼️ **🆕 Photo Analysis:** 🟢 Включен
+Bot: Работает
+N8N: {n8n_status}
+Perplexity: {perplexity_status}
+Database: {supabase_status}
 
-**Version:** SUPER BRAIN v4.0 (Flexible)
-**Architecture:** Intent-driven (no commands needed)
-**🆕 Fixed:** Photo/Document processing with Base64
-    """
+Version: SUPER BRAIN v4.0
+"""
     await message.answer(text)
 
 
 # ============================================
-# UNIVERSAL MESSAGE HANDLER (MAIN LOGIC)
+# UNIVERSAL MESSAGE HANDLER
 # ============================================
-
 
 @dp.message(F.text | F.voice | F.document | F.photo)
 async def handle_any_message(message: Message):
-    """
-    Main universal handler for ALL message types
-    This replaces /ask, /analyze, /report commands
-
-    🆕 Now with proper photo/document processing!
-    """
     await handle_universal_message(message)
 
 
 # ============================================
-# MAIN FUNCTION
+# MAIN
 # ============================================
 
-
 async def main():
-    """Main function to start the bot"""
-    logger.info("🚀 Starting SUPER BRAIN v4.0 Telegram Bot...")
-    logger.info(f"📡 N8N Webhook: {UNIVERSAL_WORKFLOW_URL}")
-    logger.info("🆕 Photo/Document processing: ENABLED")
-
+    logger.info("Starting SUPER BRAIN v4.0...")
+    logger.info(f"N8N: {UNIVERSAL_WORKFLOW_URL}")
+    logger.info(f"Supabase: {'Enabled' if supabase else 'Disabled'}")
+    logger.info(f"Perplexity: {'Enabled' if PERPLEXITY_API_KEY else 'Disabled'}")
+    
     try:
         await dp.start_polling(bot)
     finally:
