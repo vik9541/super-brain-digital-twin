@@ -13,6 +13,7 @@ from pathlib import Path
 
 # Load environment variables from .env file
 from dotenv import load_dotenv
+
 load_dotenv(Path(__file__).parent.parent / ".env")
 
 import httpx
@@ -46,10 +47,11 @@ conversation_contexts = {}
 
 supabase = None
 try:
-    from supabase import create_client, Client
+    from supabase import Client, create_client
+
     SUPABASE_URL = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
-    
+
     if SUPABASE_URL and SUPABASE_KEY:
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
         logger.info(f"Supabase RAW storage: ENABLED ({SUPABASE_URL})")
@@ -65,13 +67,14 @@ except Exception as e:
 # HELPER FUNCTIONS
 # ============================================
 
+
 async def download_file_as_base64(file_id: str, file_type: str = "photo") -> str | None:
     """Download file from Telegram and convert to Base64"""
     try:
         file = await bot.get_file(file_id)
         file_path = file.file_path
         file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}"
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.get(file_url)
             response.raise_for_status()
@@ -88,7 +91,7 @@ async def save_raw_message(message: Message, message_type: str, reply_to_id: int
     """Save RAW message to Supabase"""
     if not supabase:
         return None
-        
+
     try:
         raw_json = {
             "message_id": message.message_id,
@@ -98,7 +101,7 @@ async def save_raw_message(message: Message, message_type: str, reply_to_id: int
             "text": message.text,
             "caption": message.caption,
         }
-        
+
         msg_text = ""
         if message.text:
             msg_text = message.text
@@ -110,19 +113,25 @@ async def save_raw_message(message: Message, message_type: str, reply_to_id: int
             msg_text = f"[Document: {message.document.file_name}]"
         elif message_type == "photo":
             msg_text = message.caption if message.caption else "[Photo]"
-        
-        result = supabase.table("raw_messages").insert({
-            "user_id": message.from_user.id,
-            "message_id": message.message_id,
-            "chat_id": message.chat.id,
-            "message_text": msg_text,
-            "message_type": message_type,
-            "reply_to_message_id": reply_to_id,
-            "raw_telegram_json": raw_json,
-            "received_at": datetime.datetime.now().isoformat(),
-            "is_processed": False,
-        }).execute()
-        
+
+        result = (
+            supabase.table("raw_messages")
+            .insert(
+                {
+                    "user_id": message.from_user.id,
+                    "message_id": message.message_id,
+                    "chat_id": message.chat.id,
+                    "message_text": msg_text,
+                    "message_type": message_type,
+                    "reply_to_message_id": reply_to_id,
+                    "raw_telegram_json": raw_json,
+                    "received_at": datetime.datetime.now().isoformat(),
+                    "is_processed": False,
+                }
+            )
+            .execute()
+        )
+
         return result.data[0] if result.data else None
     except Exception as e:
         logger.error(f"Failed to save RAW message: {e}")
@@ -135,14 +144,22 @@ async def analyze_message_intent(message_data: dict) -> dict:
         async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(UNIVERSAL_WORKFLOW_URL, json=message_data)
             response.raise_for_status()
-            
+
             if not response.content:
-                return {"error": "Empty response", "confidence": 0, "answer": "Пустой ответ от сервера"}
-            
+                return {
+                    "error": "Empty response",
+                    "confidence": 0,
+                    "answer": "Пустой ответ от сервера",
+                }
+
             try:
                 return response.json()
             except json.JSONDecodeError:
-                return {"error": "Invalid JSON", "confidence": 0, "answer": f"Ошибка: {response.text[:200]}"}
+                return {
+                    "error": "Invalid JSON",
+                    "confidence": 0,
+                    "answer": f"Ошибка: {response.text[:200]}",
+                }
     except Exception as e:
         logger.error(f"Analysis error: {e}")
         return {"error": str(e), "confidence": 0, "answer": f"Ошибка: {str(e)}"}
@@ -151,11 +168,11 @@ async def analyze_message_intent(message_data: dict) -> dict:
 async def handle_universal_message(message: Message):
     """Universal handler for ANY message type"""
     user_id = message.from_user.id
-    
+
     message_text = ""
     message_type = "text"
     file_data = None
-    
+
     if message.text:
         message_text = message.text
         message_type = "text"
@@ -175,12 +192,12 @@ async def handle_universal_message(message: Message):
         if not file_data:
             await message.answer("Не удалось загрузить фото")
             return
-    
+
     reply_to_id = message.reply_to_message.message_id if message.reply_to_message else None
     await save_raw_message(message, message_type, reply_to_id)
-    
+
     context = conversation_contexts.get(user_id, [])
-    
+
     analysis_data = {
         "message": message_text,
         "message_type": message_type,
@@ -189,29 +206,29 @@ async def handle_universal_message(message: Message):
         "context": context[-3:],
         "request_type": "universal_analysis",
     }
-    
+
     if file_data:
         analysis_data["file_base64"] = file_data
         analysis_data["has_file"] = True
-    
+
     status_msg = await message.answer("Анализирую...")
     result = await analyze_message_intent(analysis_data)
-    
+
     if user_id not in conversation_contexts:
         conversation_contexts[user_id] = []
     conversation_contexts[user_id].append({"role": "user", "content": message_text})
-    
+
     if "error" in result:
         await status_msg.edit_text(result.get("answer", "Ошибка"))
         return
-    
+
     answer = result.get("answer", "Не понял. Уточните?")
     confidence = result.get("confidence", 0)
     questions = result.get("questions", [])
-    
+
     conversation_contexts[user_id].append({"role": "assistant", "content": answer})
     await status_msg.edit_text(answer)
-    
+
     if confidence < 80 and questions:
         clarification = "\n\nУточняющие вопросы:\n"
         for i, q in enumerate(questions, 1):
@@ -222,6 +239,7 @@ async def handle_universal_message(message: Message):
 # ============================================
 # COMMAND HANDLERS
 # ============================================
+
 
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
@@ -265,14 +283,16 @@ async def cmd_status(message: Message):
     n8n_status = "UNKNOWN"
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{N8N_WEBHOOK_BASE.replace('/webhook', '')}/healthz", follow_redirects=True)
+            response = await client.get(
+                f"{N8N_WEBHOOK_BASE.replace('/webhook', '')}/healthz", follow_redirects=True
+            )
             n8n_status = "OK" if response.status_code in [200, 404] else "ERROR"
     except:
         pass
-    
+
     supabase_status = "Connected" if supabase else "Disabled"
     perplexity_status = "OK" if PERPLEXITY_API_KEY else "No API Key"
-    
+
     text = f"""
 Статус Системы
 
@@ -290,6 +310,7 @@ Version: SUPER BRAIN v4.0
 # UNIVERSAL MESSAGE HANDLER
 # ============================================
 
+
 @dp.message(F.text | F.voice | F.document | F.photo)
 async def handle_any_message(message: Message):
     await handle_universal_message(message)
@@ -299,12 +320,13 @@ async def handle_any_message(message: Message):
 # MAIN
 # ============================================
 
+
 async def main():
     logger.info("Starting SUPER BRAIN v4.0...")
     logger.info(f"N8N: {UNIVERSAL_WORKFLOW_URL}")
     logger.info(f"Supabase: {'Enabled' if supabase else 'Disabled'}")
     logger.info(f"Perplexity: {'Enabled' if PERPLEXITY_API_KEY else 'Disabled'}")
-    
+
     try:
         await dp.start_polling(bot)
     finally:
