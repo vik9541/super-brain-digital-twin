@@ -8,7 +8,7 @@ uvicorn[standard]==0.27.0
 
 
 # HTTP Client
-httpx==0.26.0
+httpx>=0.24,<0.26
 
 # Data Validation
 pydantic==2.5.3
@@ -101,7 +101,6 @@ numpy>=1.26.0
 textblob>=0.18.0
 
 # Job Scheduling
-apscheduler>=3.10.4
 apscheduler>=3.10.4
 
 # GraphQL Server (Phase 6)
