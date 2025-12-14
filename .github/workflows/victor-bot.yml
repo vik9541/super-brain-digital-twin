@@ -48,21 +48,11 @@ jobs:
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
-      - name: Save DigitalOcean kubeconfig
-        run: doctl kubernetes cluster kubeconfig save ${{ secrets.K8S_CLUSTER_NAME }}
-
-      - name: Update deployment image
+      - name: Image built successfully
         run: |
-          kubectl set image deployment/victor-bot-v2 \
-            victor-bot=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
-            --record
-
-      - name: Wait for rollout
-        run: |
-          kubectl rollout status deployment/victor-bot-v2 --timeout=300s
-
-      - name: Verify deployment
-        run: |
-          kubectl get pods -l app=victor-bot-v2
-          kubectl get svc victor-bot-service
-          kubectl get ingress victor-bot-ingress
+          echo "✅ Image pushed to registry"
+          echo "Image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}"
+          echo ""
+          echo "Next steps (run locally):"
+          echo "1. kubectl set image deployment/victor-bot-v2 victor-bot=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}"
+          echo "2. kubectl rollout status deployment/victor-bot-v2"
