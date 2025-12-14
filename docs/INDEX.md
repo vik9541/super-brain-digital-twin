@@ -14,57 +14,57 @@
 
 ---
 
-## Backend Module (97k-backend)
+## Backend Module (superbrain-backend)
 
 ### Phase Reports
-- [PHASE 1-3: MVP](https://github.com/vik9541/97k-backend) - Auth, Users, Products
-- [PHASE 4-6: B2B](https://github.com/vik9541/97k-backend) - Orders, Pricing, Contracts
-- [PHASE 7-9: Mobile](https://github.com/vik9541/97k-backend) - Gmail, Analytics, GDPR
-- [PHASE 10: Apple Contacts](https://github.com/vik9541/97k-backend/blob/main/PHASE_10_FINAL_SUMMARY_RU.md)
-- [PHASE 11: Google Contacts](https://github.com/vik9541/97k-backend/blob/main/PHASE_11_COMPLETE_REPORT.md)
-- [PHASE 12: Outlook Contacts](https://github.com/vik9541/97k-backend/blob/main/PHASE_12_FINAL_REPORT.md)
+- [PHASE 1-3: MVP](https://github.com/vik9541/superbrain-backend) - Auth, Users, Products
+- [PHASE 4-6: B2B](https://github.com/vik9541/superbrain-backend) - Orders, Pricing, Contracts
+- [PHASE 7-9: Mobile](https://github.com/vik9541/superbrain-backend) - Gmail, Analytics, GDPR
+- [PHASE 10: Apple Contacts](https://github.com/vik9541/superbrain-backend/blob/main/PHASE_10_FINAL_SUMMARY_RU.md)
+- [PHASE 11: Google Contacts](https://github.com/vik9541/superbrain-backend/blob/main/PHASE_11_COMPLETE_REPORT.md)
+- [PHASE 12: Outlook Contacts](https://github.com/vik9541/superbrain-backend/blob/main/PHASE_12_FINAL_REPORT.md)
 
 ### Guides
-- [IOS_IMPLEMENTATION_GUIDE.md](https://github.com/vik9541/97k-backend/blob/main/IOS_IMPLEMENTATION_GUIDE.md)
-- [PHASE_11_ANDROID_CODE.md](https://github.com/vik9541/97k-backend/blob/main/PHASE_11_ANDROID_CODE.md)
-- [PHASE_11_DEPLOYMENT_GUIDE.md](https://github.com/vik9541/97k-backend/blob/main/PHASE_11_DEPLOYMENT_GUIDE.md)
+- [IOS_IMPLEMENTATION_GUIDE.md](https://github.com/vik9541/superbrain-backend/blob/main/IOS_IMPLEMENTATION_GUIDE.md)
+- [PHASE_11_ANDROID_CODE.md](https://github.com/vik9541/superbrain-backend/blob/main/PHASE_11_ANDROID_CODE.md)
+- [PHASE_11_DEPLOYMENT_GUIDE.md](https://github.com/vik9541/superbrain-backend/blob/main/PHASE_11_DEPLOYMENT_GUIDE.md)
 
 ---
 
-## Frontend Module (97k-frontend)
+## Frontend Module (superbrain-frontend)
 
-- [README.md](https://github.com/vik9541/97k-frontend) - PHASE 13 Planned
-
----
-
-## Database Module (97k-database)
-
-- [README.md](https://github.com/vik9541/97k-database) - PostgreSQL schema
-- [prisma/schema.prisma](https://github.com/vik9541/97k-database/blob/main/prisma/schema.prisma) - Database schema
+- [README.md](https://github.com/vik9541/superbrain-frontend) - PHASE 13 Planned
 
 ---
 
-## Infrastructure Module (97k-infrastructure)
+## Database Module (superbrain-database)
 
-- [README.md](https://github.com/vik9541/97k-infrastructure) - DevOps overview
-- [docker-compose.yml](https://github.com/vik9541/97k-infrastructure/blob/main/docker-compose.yml)
-- [nginx.conf](https://github.com/vik9541/97k-infrastructure/blob/main/nginx.conf)
-- [deploy-to-droplet.sh](https://github.com/vik9541/97k-infrastructure/blob/main/deploy-to-droplet.sh)
+- [README.md](https://github.com/vik9541/superbrain-database) - PostgreSQL schema
+- [prisma/schema.prisma](https://github.com/vik9541/superbrain-database/blob/main/prisma/schema.prisma) - Database schema
 
 ---
 
-## Automation Module (97k-n8n-workflows)
+## Infrastructure Module (superbrain-infrastructure)
 
-- [README.md](https://github.com/vik9541/97k-n8n-workflows) - 4 core workflows
+- [README.md](https://github.com/vik9541/superbrain-infrastructure) - DevOps overview
+- [docker-compose.yml](https://github.com/vik9541/superbrain-infrastructure/blob/main/docker-compose.yml)
+- [nginx.conf](https://github.com/vik9541/superbrain-infrastructure/blob/main/nginx.conf)
+- [deploy-to-droplet.sh](https://github.com/vik9541/superbrain-infrastructure/blob/main/deploy-to-droplet.sh)
 
 ---
 
-## Technical Specifications (97k-97v-specs)
+## Automation Module (superbrain-n8n-workflows)
 
-- [README.md](https://github.com/vik9541/97k-97v-specs) - Specs overview
-- [docs/TZ.md](https://github.com/vik9541/97k-97v-specs/blob/main/docs/TZ.md) - Main technical spec
-- [docs/functional-requirements.md](https://github.com/vik9541/97k-97v-specs/blob/main/docs/functional-requirements.md)
-- [docs/database-architecture.md](https://github.com/vik9541/97k-97v-specs/blob/main/docs/database-architecture.md)
+- [README.md](https://github.com/vik9541/superbrain-n8n-workflows) - 4 core workflows
+
+---
+
+## Technical Specifications (superbrain-97v-specs)
+
+- [README.md](https://github.com/vik9541/superbrain-97v-specs) - Specs overview
+- [docs/TZ.md](https://github.com/vik9541/superbrain-97v-specs/blob/main/docs/TZ.md) - Main technical spec
+- [docs/functional-requirements.md](https://github.com/vik9541/superbrain-97v-specs/blob/main/docs/functional-requirements.md)
+- [docs/database-architecture.md](https://github.com/vik9541/superbrain-97v-specs/blob/main/docs/database-architecture.md)
 
 ---
 
@@ -73,12 +73,12 @@
 | Module | Status | Repository |
 |--------|--------|------------|
 | super-brain v5.0 | ACTIVE | [Link](https://github.com/vik9541/super-brain-digital-twin) |
-| 97k-backend | PHASE 12 COMPLETE | [Link](https://github.com/vik9541/97k-backend) |
-| 97k-frontend | PHASE 13 PLANNED | [Link](https://github.com/vik9541/97k-frontend) |
-| 97k-database | SYNCED | [Link](https://github.com/vik9541/97k-database) |
-| 97k-infrastructure | PRODUCTION | [Link](https://github.com/vik9541/97k-infrastructure) |
-| 97k-n8n-workflows | 4 WORKFLOWS | [Link](https://github.com/vik9541/97k-n8n-workflows) |
-| 97k-97v-specs | UPDATED | [Link](https://github.com/vik9541/97k-97v-specs) |
+| superbrain-backend | PHASE 12 COMPLETE | [Link](https://github.com/vik9541/superbrain-backend) |
+| superbrain-frontend | PHASE 13 PLANNED | [Link](https://github.com/vik9541/superbrain-frontend) |
+| superbrain-database | SYNCED | [Link](https://github.com/vik9541/superbrain-database) |
+| superbrain-infrastructure | PRODUCTION | [Link](https://github.com/vik9541/superbrain-infrastructure) |
+| superbrain-n8n-workflows | 4 WORKFLOWS | [Link](https://github.com/vik9541/superbrain-n8n-workflows) |
+| superbrain-97v-specs | UPDATED | [Link](https://github.com/vik9541/superbrain-97v-specs) |
 
 ---
 

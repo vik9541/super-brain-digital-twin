@@ -1,0 +1,47 @@
+# Victor Bot v2.0 - Production Dockerfile
+FROM python:3.11-slim
+
+# Labels
+LABEL maintainer="Victor Bot Team"
+LABEL version="2.0.0"
+LABEL description="Victor Bot v2.0 - Universal Telegram Sensor"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    tesseract-ocr-rus \
+    tesseract-ocr-eng \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user
+RUN useradd -m -u 1000 -s /bin/bash victorbot
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first (for layer caching)
+COPY requirements.api.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.api.txt
+
+# Copy application code
+COPY --chown=victorbot:victorbot api/ ./api/
+COPY --chown=victorbot:victorbot workers/ ./workers/
+COPY --chown=victorbot:victorbot database/ ./database/
+COPY --chown=victorbot:victorbot main_victor_bot.py .
+
+# Switch to non-root user
+USER victorbot
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD curl -f http://localhost:8000/health || exit 1
+
+# Run with uvicorn for production
+CMD ["python", "-m", "uvicorn", "main_victor_bot:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

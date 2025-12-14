@@ -83,12 +83,12 @@
 ### Domain Apps
 | Репозиторий | Роль | Layer | Домен |
 |-------------|------|-------|-------|
-| 97k-frontend | Фронтенд магазина | Domain | 97k.ru |
-| 97k-backend | Бэкенд магазина | Domain | 97k.ru |
-| 97k-database | Схема БД | Domain | 97k.ru |
-| 97k-infrastructure | CI/CD, Docker, K8s | Domain | 97k.ru |
-| 97k-n8n-workflows | Автоматизация n8n | Domain | 97k.ru |
-| 97k-97v-specs | ТЗ и документация | Domain | 97k.ru |
+| superbrain-frontend | Фронтенд Super Brain | Domain | 97v.ru |
+| superbrain-backend | Бэкенд Super Brain | Domain | 97v.ru |
+| superbrain-database | Схема БД | Domain | 97v.ru |
+| superbrain-infrastructure | CI/CD, Docker, K8s | Domain | 97v.ru |
+| superbrain-n8n-workflows | Автоматизация n8n | Domain | 97v.ru |
+| superbrain-97v-specs | ТЗ и документация | Domain | 97v.ru |
 
 ---
 
@@ -191,7 +191,7 @@ git push
 
 ### Именование репозиториев:
 - Governance/Platform/AI: `super-brain-*`, `digital-twin-*`, `viktor-ai-*`
-- Доменные проекты: `{domain_prefix}-{component}`, например `97k-backend`, `04o-frontend`
+- Доменные проекты: `{domain_prefix}-{component}`, например `superbrain-backend`, `04o-frontend`
 
 ### Описание репозиториев:
 Каждый репозиторий должен иметь в README первой строкой:

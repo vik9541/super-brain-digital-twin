@@ -24,7 +24,7 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 │
 ├─── 🛠️ PROJECTS/ (Связанные проекты)
 │    │
-│    ├─ 97k-backend/ ← BACKEND MODULE
+│    ├─ superbrain-backend/ ← BACKEND MODULE
 │    │  ├─ Status: ✅ PHASE 12 COMPLETE
 │    │  ├─ Stack: NestJS (TypeScript)
 │    │  ├─ Code: 5500+ LOC
@@ -66,7 +66,7 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 │    │     └─ SETUP.md (локальная разработка)
 │    │
 │    │
-│    ├─ 97k-frontend/ ← FRONTEND MODULE
+│    ├─ superbrain-frontend/ ← FRONTEND MODULE
 │    │  ├─ Status: 🟡 PHASE 13 PLANNED
 │    │  ├─ Stack: React 18 + Next.js + TailwindCSS
 │    │  ├─ Domain: www.97k.ru
@@ -79,15 +79,15 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 │    │  │  └─ Analytics Dashboard
 │    │  │
 │    │  └─ Integration:
-│    │     └─ REST API → 97k-backend (/api/*)
+│    │     └─ REST API → superbrain-backend (/api/*)
 │    │
 │    │
-│    ├─ 97k-database/ ← SHARED DATABASE
+│    ├─ superbrain-database/ ← SHARED DATABASE
 │    │  ├─ Status: 🔄 SYNCING
 │    │  ├─ Database: PostgreSQL 15 (via Supabase)
 │    │  ├─ ORM: Prisma 5.x
 │    │  ├─ Schema: prisma/schema.prisma
-│    │  │           (replicated from 97k-backend)
+│    │  │           (replicated from superbrain-backend)
 │    │  │
 │    │  ├─ Tables (17+):
 │    │  │  ├─ User (Profiles, auth data)
@@ -106,11 +106,11 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 │    │  │  └─ Audit logs
 │    │  │
 │    │  └─ Source of Truth:
-│    │     └─ 97k-backend/prisma/schema.prisma ← MASTER
+│    │     └─ superbrain-backend/prisma/schema.prisma ← MASTER
 │    │        (synced daily via GitHub Actions)
 │    │
 │    │
-│    ├─ 97k-infrastructure/ ← DEVOPS MODULE
+│    ├─ superbrain-infrastructure/ ← DEVOPS MODULE
 │    │  ├─ Status: ✅ DEPLOYED
 │    │  ├─ Infrastructure:
 │    │  │  ├─ DigitalOcean DOKS (K8s cluster)
@@ -121,8 +121,8 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 │    │  │
 │    │  ├─ Domains:
 │    │  │  ├─ 97v.ru → super-brain-digital-twin
-│    │  │  ├─ api.97k.ru → 97k-backend (port 3000)
-│    │  │  ├─ www.97k.ru → 97k-frontend (port 3001)
+│    │  │  ├─ api.97v.ru → superbrain-backend (port 3000)
+│    │  │  ├─ www.97v.ru → superbrain-frontend (port 3001)
 │    │  │  └─ storage.97k.ru → File uploads
 │    │  │
 │    │  ├─ Services:
@@ -138,13 +138,13 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 │    │     └─ Health checks + auto-recovery
 │    │
 │    │
-│    ├─ 97k-n8n-workflows/ ← AUTOMATION MODULE
+│    ├─ superbrain-n8n-workflows/ ← AUTOMATION MODULE
 │    │  ├─ Status: ✅ 4 WORKFLOWS ACTIVE
 │    │  ├─ Platform: n8n (open-source)
 │    │  │
 │    │  ├─ Workflows:
 │    │  │  ├─ Order Processing
-│    │  │  │  └─ Trigger: New order → 97k-backend
+│    │  │  │  └─ Trigger: New order → superbrain-backend
 │    │  │  │     Action: Validation → 1C sync → Notification
 │    │  │  │
 │    │  │  ├─ Payment Gateway
@@ -160,10 +160,10 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 │    │  │        Action: Fetch from 1C → Update DB → Notify
 │    │  │
 │    │  └─ Integration:
-│    │     └─ Webhooks → 97k-backend API
+│    │     └─ Webhooks → superbrain-backend API
 │    │
 │    │
-│    └─ 97k-97v-specs/ ← TECHNICAL SPECIFICATIONS
+│    └─ superbrain-97v-specs/ ← TECHNICAL SPECIFICATIONS
 │       ├─ Status: 🟡 BEING UPDATED
 │       ├─ Purpose: Planning & requirements documentation
 │       │
@@ -176,7 +176,7 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 │       │  └─ docs/phases/ (4-phase strategic plan)
 │       │
 │       └─ NOTE: Being aligned with actual 12-PHASE
-│          implementation from 97k-backend
+│          implementation from superbrain-backend
 │
 │
 ├─── 📊 DOCUMENTATION/
@@ -190,7 +190,7 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 │
 └─── 🔗 LINKS/ (Cross-repo connections)
      ├─ PHASE_MAPPING.md ← How PHASE 1-12 relate to TASK-v5
-     ├─ ARCHITECTURE_ALIGNMENT.md ← 97k integration with super-brain
+     ├─ ARCHITECTURE_ALIGNMENT.md ← superbrain integration with super-brain
      ├─ CROSS_REPO_ISSUES.md ← GitHub issues linking all repos
      └─ API_ENDPOINTS.md ← All API documentation
 
@@ -202,13 +202,13 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 
 | Component | Master Location | Purpose |
 |-----------|-----------------|---------|
-| **Database Schema** | `97k-backend/prisma/schema.prisma` | Single source for DB structure |
-| **API Specification** | `97k-backend/src/` + Swagger docs | REST API definition |
+| **Database Schema** | `superbrain-backend/prisma/schema.prisma` | Single source for DB structure |
+| **API Specification** | `superbrain-backend/src/` + Swagger docs | REST API definition |
 | **Project Architecture** | `super-brain-digital-twin/MASTER_README.md` | Overall system design |
-| **Infrastructure** | `97k-infrastructure/` | Deployment & DevOps |
-| **Automation** | `97k-n8n-workflows/` | Business process automation |
-| **Frontend** | `97k-frontend/` | Web UI (React) |
-| **Backend** | `97k-backend/` | API & business logic |
+| **Infrastructure** | `superbrain-infrastructure/` | Deployment & DevOps |
+| **Automation** | `superbrain-n8n-workflows/` | Business process automation |
+| **Frontend** | `superbrain-frontend/` | Web UI (React) |
+| **Backend** | `superbrain-backend/` | API & business logic |
 
 ---
 
@@ -217,21 +217,21 @@ super-brain-digital-twin (97v.ru) ← ГЛАВНЫЙ ПРОЕКТ
 ```
 User Request
     ↓
-[NGINX Reverse Proxy] (97k-infrastructure)
+[NGINX Reverse Proxy] (superbrain-infrastructure)
     ↓
-[97k-backend API] (NestJS)
+[superbrain-backend API] (NestJS)
     ├─ Auth → JWT validation
     ├─ Logic → Service layer
     ├─ DB → Prisma ORM
     └─ Integrations → 1C, EDO, n8n
     ↓
-[PostgreSQL Database] (97k-database)
+[PostgreSQL Database] (superbrain-database)
     ├─ User data
     ├─ Orders, Products
     ├─ Contact sync logs
     └─ Analytics events
     ↓
-[n8n Workflows] (97k-n8n-workflows)
+[n8n Workflows] (superbrain-n8n-workflows)
     ├─ Payment processing
     ├─ EDO document flow
     ├─ Inventory updates
@@ -258,7 +258,8 @@ User Request
     (PORT 3001)         (PORT 3000)    (MASTER)
          ↓                    ↓              ↓
    ┌────────────┐      ┌──────────────┐  ┌──────────────┐
-   │ 97k-frontend│     │97k-backend   │  │super-brain   │
+   │ superbrain-  │     │superbrain-   │  │super-brain   │
+   │ frontend    │     │backend       │  │              │
    │  React 18   │     │NestJS        │  │Python/AI     │
    │  TailwindCSS│     │Prisma ORM    │  │3-Agent system│
    │React Query  │────→│Auth, Orders  │→ │MASTER_TEACHER│
@@ -288,20 +289,20 @@ super-brain-digital-twin:
   v5.0 — Self-improving 3-agent system (11 Dec 2025)
   v4.1 — Previous version (archived)
 
-97k-backend:
+superbrain-backend:
   1.0 (PHASE 12) — Complete with contact integrations (12 Dec 2025)
   Phases: 1-12 implemented, PHASE 13 (frontend) planned
 
-97k-frontend:
+superbrain-frontend:
   TBD (PHASE 13) — To be started
 
-97k-database:
-  Current: Syncing from 97k-backend
+superbrain-database:
+  Current: Syncing from superbrain-backend
 
-97k-infrastructure:
+superbrain-infrastructure:
   v1.0 — Production ready (Docker, K8s, CI/CD)
 
-97k-n8n-workflows:
+superbrain-n8n-workflows:
   v1.0 — 4 core workflows active
 ```
 
@@ -334,11 +335,11 @@ Authentication:
 
 **I need to understand...**
 - Architecture? → [`MASTER_README.md`](https://github.com/vik9541/super-brain-digital-twin/blob/main/MASTER_README.md)
-- How to run locally? → [`97k-backend/SETUP.md`](https://github.com/vik9541/97k-backend/blob/main/SETUP.md)
-- API endpoints? → [`97k-backend/README.md#api-endpoints`](https://github.com/vik9541/97k-backend/blob/main/README.md#-api-endpoints-mvp)
-- Database schema? → [`97k-database/prisma/schema.prisma`](https://github.com/vik9541/97k-database/blob/main/prisma/schema.prisma)
-- Deployment? → [`97k-infrastructure/README.md`](https://github.com/vik9541/97k-infrastructure/blob/main/README.md)
-- PHASE history? → [`97k-backend/PHASE_*.md`](https://github.com/vik9541/97k-backend)
+- How to run locally? → [`superbrain-backend/SETUP.md`](https://github.com/vik9541/superbrain-backend/blob/main/SETUP.md)
+- API endpoints? → [`superbrain-backend/README.md#api-endpoints`](https://github.com/vik9541/superbrain-backend/blob/main/README.md#-api-endpoints-mvp)
+- Database schema? → [`superbrain-database/prisma/schema.prisma`](https://github.com/vik9541/superbrain-database/blob/main/prisma/schema.prisma)
+- Deployment? → [`superbrain-infrastructure/README.md`](https://github.com/vik9541/superbrain-infrastructure/blob/main/README.md)
+- PHASE history? → [`superbrain-backend/PHASE_*.md`](https://github.com/vik9541/superbrain-backend)
 - super-brain v5.0? → [`SUPER_BRAIN_v5.0_GLOBAL_EDITION.md`](https://github.com/vik9541/super-brain-digital-twin/blob/main/SUPER_BRAIN_v5.0_GLOBAL_EDITION.md)
 
 ---

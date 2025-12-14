@@ -59,10 +59,10 @@
    - Helper scripts
    - Context tools
 
-4. **97k-backend** - $0.02
+4. **superbrain-backend** - $0.02
    - Minimal CI/CD usage
 
-5. **97k-infrastructure** - <$0.01
+5. **superbrain-infrastructure** - <$0.01
    - Infrastructure configs
 
 ### Workflows Running

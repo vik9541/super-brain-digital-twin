@@ -1,0 +1,152 @@
+---
+# Victor Bot v2.0 - Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: victor-bot-v2
+  namespace: default
+  labels:
+    app: victor-bot-v2
+    version: "2.0.0"
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: victor-bot-v2
+  template:
+    metadata:
+      labels:
+        app: victor-bot-v2
+        version: "2.0.0"
+    spec:
+      containers:
+      - name: victor-bot
+        image: registry.digitalocean.com/YOUR_REGISTRY/victor-bot:2.0.0
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        
+        env:
+        # From ConfigMap
+        - name: API_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: victor-bot-config
+              key: API_HOST
+        - name: API_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: victor-bot-config
+              key: API_PORT
+        - name: ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: victor-bot-config
+              key: ENVIRONMENT
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: victor-bot-config
+              key: LOG_LEVEL
+        
+        # Feature flags from ConfigMap
+        - name: ENABLE_OCR
+          valueFrom:
+            configMapKeyRef:
+              name: victor-bot-config
+              key: ENABLE_OCR
+        - name: ENABLE_TRANSCRIPTION
+          valueFrom:
+            configMapKeyRef:
+              name: victor-bot-config
+              key: ENABLE_TRANSCRIPTION
+        - name: ENABLE_IMAGE_ANALYSIS
+          valueFrom:
+            configMapKeyRef:
+              name: victor-bot-config
+              key: ENABLE_IMAGE_ANALYSIS
+        - name: ENABLE_FACE_RECOGNITION
+          valueFrom:
+            configMapKeyRef:
+              name: victor-bot-config
+              key: ENABLE_FACE_RECOGNITION
+        
+        # From Secrets
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: victor-bot-secrets
+              key: database-url
+        - name: SUPABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: victor-bot-secrets
+              key: supabase-url
+        - name: SUPABASE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: victor-bot-secrets
+              key: supabase-key
+        - name: TELEGRAM_BOT_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: victor-bot-secrets
+              key: telegram-bot-token
+        - name: VICTOR_CHAT_ID
+          valueFrom:
+            secretKeyRef:
+              name: victor-bot-secrets
+              key: victor-chat-id
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: victor-bot-secrets
+              key: openai-api-key
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        # Security context
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+      
+      # Image pull secrets (if using private registry)
+      # imagePullSecrets:
+      # - name: digitalocean-registry
+      
+      restartPolicy: Always

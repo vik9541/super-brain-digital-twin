@@ -12,11 +12,11 @@
 |:---:|:---|:---|:---:|:---:|:---:|:---:|:---|
 | 1 | **super-brain-digital-twin** | MAIN PROJECT (Production DOKS) | ✅ ACTIVE | ✅ YES | ✅ YES | ✅ YES | ⚠️ KUBE_CONFIG |
 | 2 | digital-twin-bot | K8s migration | ❌ ABANDONED | ❌ NO | ❌ NO | ❌ NO | ⛔ EMPTY |
-| 3 | 97k-infrastructure | VPS Infrastructure | ⚠️ SECONDARY | ❌ NO | ❌ NO | ✅ YES | ⚠️ Docker Compose only |
-| 4 | 97k-backend | NestJS API | ⚠️ SECONDARY | ❌ NO | ❌ NO | ✅ YES | ⚠️ Not K8s ready |
-| 5 | 97k-frontend | Next.js App | ⚠️ SECONDARY | ❌ NO | ❌ NO | ❌ NO | ⚠️ No deployment |
-| 6 | 97k-database | PostgreSQL Schema | ⚠️ REFERENCE | ❌ NO | ❌ NO | ❌ NO | ℹ️ Only SQL |
-| 7 | 97k-n8n-workflows | n8n Automation | ⚠️ REFERENCE | ❌ NO | ❌ NO | ❌ NO | ℹ️ Only JSON |
+| 3 | superbrain-infrastructure | VPS Infrastructure | ⚠️ SECONDARY | ❌ NO | ❌ NO | ✅ YES | ⚠️ Docker Compose only |
+| 4 | superbrain-backend | NestJS API | ⚠️ SECONDARY | ❌ NO | ❌ NO | ✅ YES | ⚠️ Not K8s ready |
+| 5 | superbrain-frontend | Next.js App | ⚠️ SECONDARY | ❌ NO | ❌ NO | ❌ NO | ⚠️ No deployment |
+| 6 | superbrain-database | PostgreSQL Schema | ⚠️ REFERENCE | ❌ NO | ❌ NO | ❌ NO | ℹ️ Only SQL |
+| 7 | superbrain-n8n-workflows | n8n Automation | ⚠️ REFERENCE | ❌ NO | ❌ NO | ❌ NO | ℹ️ Only JSON |
 | 8 | digital-twin-api | API (Old) | ❌ DEPRECATED | ❌ NO | ❌ NO | ❌ NO | ⛔ ARCHIVED |
 
 ---
@@ -144,9 +144,9 @@ cat kubeconfig.b64
 | Репозиторий | Проблема | Действие |
 |:---|:---|:---|
 | **digital-twin-bot** | Пустой репо, создан 2 дня назад | ⛔ УДАЛИТЬ или заполнить |
-| **97k-infrastructure** | Docker Compose, не K8s | ⚠️ Вторичный проект |
-| **97k-backend** | NestJS без K8s конфигов | ⚠️ Вторичный проект |
-| **97k-frontend** | Next.js без deployment | ⚠️ Вторичный проект |
+| **superbrain-infrastructure** | Docker Compose, не K8s | ⚠️ Вторичный проект |
+| **superbrain-backend** | NestJS без K8s конфигов | ⚠️ Вторичный проект |
+| **superbrain-frontend** | Next.js без deployment | ⚠️ Вторичный проект |
 | **digital-twin-api** | Старый API (deprecated) | ⛔ УДАЛИТЬ |
 
 ---

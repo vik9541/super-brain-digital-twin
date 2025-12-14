@@ -160,7 +160,7 @@ CREATE INDEX idx_health_diary ON health_diary(user_id);
 #### ДЕНЬ 2: ВТ 14 ДЕКАБРЯ
 **TASK-BOT-FIX-002: Архитектура и структура кода**
 
-Создать правильную структуру в 97k-backend repo:
+Создать правильную структуру в superbrain-backend repo:
 
 ```
 bots/personal-assistant-bot/
@@ -1015,8 +1015,8 @@ class SettingsHandler:
 
 ```bash
 # Шаг 1: Клонировать репозиторий
-git clone https://github.com/vik9541/97k-backend.git
-cd 97k-backend
+git clone https://github.com/vik9541/superbrain-backend.git
+cd superbrain-backend
 
 # Шаг 2: Создать ветку
 git checkout -b feature/personal-assistant-bot

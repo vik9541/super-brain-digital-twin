@@ -1,0 +1,24 @@
+---
+# Victor Bot v2.0 - ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: victor-bot-config
+  namespace: default
+data:
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  
+  # Feature flags
+  ENABLE_OCR: "false"
+  ENABLE_TRANSCRIPTION: "false"
+  ENABLE_IMAGE_ANALYSIS: "false"
+  ENABLE_FACE_RECOGNITION: "false"
+  
+  # Logging
+  LOG_LEVEL: "INFO"
+  
+  # Application
+  APP_NAME: "Victor Bot v2.0"
+  APP_VERSION: "2.0.0"
+  ENVIRONMENT: "production"

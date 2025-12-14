@@ -31,7 +31,7 @@
    - Complete database schema
    - 50 KB document
 
-✅ **FULL_PROJECT_DOCUMENTATION.md** (97k-backend)
+✅ **FULL_PROJECT_DOCUMENTATION.md** (superbrain-backend)
    - Updated main email: info@97v.ru
    - Victor Lavrentiev as PRIMARY_ADMIN
    - Victor-centric system description
@@ -175,8 +175,8 @@ Team → People Victor works with
    - Size: ~50 KB
    - Content: Complete Victor-centric system architecture
 
-2. ✅ **FULL_PROJECT_DOCUMENTATION.md** (97k-backend)
-   - Location: https://github.com/vik9541/97k-backend/blob/main/FULL_PROJECT_DOCUMENTATION.md
+2. ✅ **FULL_PROJECT_DOCUMENTATION.md** (superbrain-backend)
+   - Location: https://github.com/vik9541/superbrain-backend/blob/main/FULL_PROJECT_DOCUMENTATION.md
    - Updated: Main email changed to info@97v.ru
    - Content: System-wide documentation with Victor as PRIMARY_ADMIN
 

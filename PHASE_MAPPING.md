@@ -1,14 +1,14 @@
-﻿# PHASE_MAPPING.md - Linking 97k-backend PHASES to super-brain v5.0 TASKS
+﻿# PHASE_MAPPING.md - Linking superbrain-backend PHASES to super-brain v5.0 TASKS
 
-> How the 12 implementation phases of 97k-backend connect with TASK-v5 from super-brain-digital-twin
+> How the 12 implementation phases of superbrain-backend connect with TASK-v5 from super-brain-digital-twin
 
 ---
 
 ## Overview
 
-- **97k-backend**: 12 implementation phases (PHASE 1-12) - Complete B2B/B2C API
+- **superbrain-backend**: 12 implementation phases (PHASE 1-12) - Complete B2B/B2C API
 - **super-brain v5.0**: TASK-v5-001 to TASK-v5-022 - AI/ML enhancements
-- **Integration**: 97k-backend feeds data to super-brain MASTER_TEACHER
+- **Integration**: superbrain-backend feeds data to super-brain MASTER_TEACHER
 
 ---
 
@@ -25,7 +25,7 @@
 
 ## PHASE to TASK-v5 Alignment
 
-| PHASE | 97k-backend Focus | TASK-v5 Connection |
+| PHASE | superbrain-backend Focus | TASK-v5 Connection |
 |-------|-------------------|-------------------|
 | 1 | AUTH (JWT, OAuth) | v5-010: Agent Memory (tokens) |
 | 2 | USERS (Profiles, RLS) | v5-011: Pattern Discovery (user behavior) |
@@ -42,7 +42,7 @@
 
 ---
 
-## Data Flow: 97k-backend to super-brain
+## Data Flow: superbrain-backend to super-brain
 
 ### Contact Integration to Knowledge Graph
 97k PHASE 10-12 (Apple/Google/Outlook Contacts)
