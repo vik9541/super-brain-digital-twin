@@ -1,11 +1,13 @@
 """
 Простой тест доступа через HTTP к Supabase REST API
 """
-import httpx
-from dotenv import load_dotenv
+
 import os
 
-load_dotenv('.env.victor')
+import httpx
+from dotenv import load_dotenv
+
+load_dotenv(".env.victor")
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
@@ -31,7 +33,7 @@ try:
     response = httpx.get(url, headers=headers, timeout=10.0)
     print(f"Status: {response.status_code}")
     print(f"Response: {response.text[:200]}")
-    
+
     if response.status_code == 200:
         data = response.json()
         print(f"\n✅ SUCCESS! Found {len(data)} rows")
@@ -40,7 +42,7 @@ try:
     else:
         print(f"\n❌ ERROR: {response.status_code}")
         print(response.text)
-        
+
 except Exception as e:
     print(f"❌ EXCEPTION: {e}")
 
