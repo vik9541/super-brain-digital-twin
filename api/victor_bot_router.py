@@ -7,19 +7,18 @@ import asyncio
 import logging
 import os
 import sys
+import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
-import uuid
 
-import psycopg
-from psycopg_pool import AsyncConnectionPool
 import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException
+from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, Field
 
 # Windows fix для psycopg3 async
-if sys.platform == 'win32':
+if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Настройка логирования
@@ -221,15 +220,15 @@ async def save_to_supabase_rest(table: str, data: dict) -> bool:
             "apikey": SUPABASE_ANON_KEY,
             "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
             "Content-Type": "application/json",
-            "Prefer": "return=representation"
+            "Prefer": "return=representation",
         }
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(url, json=data, headers=headers, timeout=10.0)
             response.raise_for_status()
             logger.info(f"✅ REST API: Saved to {table}: {data.get('id', 'unknown')}")
             return True
-            
+
     except Exception as e:
         logger.error(f"❌ REST API save failed for {table}: {e}")
         return False
@@ -380,20 +379,20 @@ async def handle_text(text: str, message_id: int, pool: Optional[AsyncConnection
 
     # Классифицировать тип
     obs_type = classify_text(text)
-    
+
     observation_id = str(uuid.uuid4())
-    
+
     # Создать observation через REST API
     observation_data = {
         "id": observation_id,
         "type": obs_type,
         "content": text,
         "timestamp": datetime.now().isoformat(),
-        "source": "telegram"
+        "source": "telegram",
     }
-    
+
     success = await save_to_supabase_rest("victor_observations", observation_data)
-    
+
     if success:
         # Создать inbox запись
         inbox_data = {
@@ -403,9 +402,9 @@ async def handle_text(text: str, message_id: int, pool: Optional[AsyncConnection
             "processing_status": "done",
             "telegram_message_id": message_id,
             "linked_observation_id": observation_id,
-            "is_processed": True
+            "is_processed": True,
         }
-        
+
         await save_to_supabase_rest("victor_inbox", inbox_data)
         await send_to_telegram(f"✅ Записано как <b>{obs_type}</b>")
         logger.info(f"✅ Text saved as observation: {obs_type}")
@@ -414,9 +413,11 @@ async def handle_text(text: str, message_id: int, pool: Optional[AsyncConnection
         await send_to_telegram(f"⚠️ Ошибка сохранения, но текст получен: {text[:50]}")
 
 
-
 async def handle_photo(
-    photo: List[TelegramPhotoSize], caption: Optional[str], message_id: int, pool: AsyncConnectionPool
+    photo: List[TelegramPhotoSize],
+    caption: Optional[str],
+    message_id: int,
+    pool: AsyncConnectionPool,
 ):
     """
     Обработка фото → спрашиваем что это
