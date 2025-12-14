@@ -13,7 +13,7 @@ import asyncio
 import os
 from pathlib import Path
 
-import asyncpg
+import psycopg
 from dotenv import load_dotenv
 
 
@@ -54,7 +54,7 @@ async def deploy_schema():
 
     try:
         print("⏳ Connecting to database...")
-        conn = await asyncpg.connect(DATABASE_URL)
+        conn = await psycopg.AsyncConnection.connect(DATABASE_URL)
 
         print("✅ Connected successfully!")
         print()
@@ -82,7 +82,8 @@ async def deploy_schema():
 
                 print(f"  [{i}/{len(statements)}] {preview}")
 
-                await conn.execute(statement)
+                async with conn.cursor() as cur:
+                    await cur.execute(statement)
                 success_count += 1
 
             except Exception as e:

@@ -3,17 +3,24 @@ VICTOR BOT v2.0 - Universal Sensor API
 Главный роутер для Telegram Webhook и обработки всех типов сообщений
 """
 
+import asyncio
 import logging
 import os
+import sys
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 import uuid
 
-import asyncpg
+import psycopg
+from psycopg_pool import AsyncConnectionPool
 import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel, Field
+
+# Windows fix для psycopg3 async
+if sys.platform == 'win32':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -139,32 +146,69 @@ class ClarifyRequest(BaseModel):
 # ============================================================================
 
 # Глобальный DB pool (создается один раз при старте)
-_db_pool: Optional[asyncpg.Pool] = None
+_db_pool: Optional[AsyncConnectionPool] = None
 
 
 async def get_db_pool():
-    """Получить connection pool к БД"""
+    """Получить connection pool к БД (psycopg3 async)"""
     global _db_pool
 
     if _db_pool is None:
         if not DATABASE_URL:
             raise ValueError("DATABASE_URL not configured")
 
-        # Настройки для Supabase pooler (pgbouncer)
-        _db_pool = await asyncpg.create_pool(
+        # psycopg3 AsyncConnectionPool (совместим с PgBouncer)
+        _db_pool = AsyncConnectionPool(
             DATABASE_URL,
             min_size=1,
             max_size=5,
-            server_settings={"jit": "off"},  # Required for pgbouncer
+            kwargs={"options": "-c jit=off"},  # PgBouncer compatibility
         )
-        logger.info("✅ Database pool created")
+        await _db_pool.open()
+        logger.info("✅ psycopg3 AsyncConnectionPool created")
 
     return _db_pool
 
 
 # ============================================================================
-# HELPER FUNCTIONS
+# HELPER FUNCTIONS - psycopg3 compatibility
 # ============================================================================
+
+
+async def fetchval(conn, query: str, *args):
+    """Helper для получения одного значения (эквивалент asyncpg.fetchval)"""
+    async with conn.cursor() as cur:
+        await cur.execute(query, args)
+        row = await cur.fetchone()
+        return row[0] if row else None
+
+
+async def fetchrow(conn, query: str, *args):
+    """Helper для получения одной строки (эквивалент asyncpg.fetchrow)"""
+    async with conn.cursor() as cur:
+        await cur.execute(query, args)
+        row = await cur.fetchone()
+        if row:
+            # Преобразуем в dict для обратной совместимости
+            return dict(zip([desc[0] for desc in cur.description], row))
+        return None
+
+
+async def fetch(conn, query: str, *args):
+    """Helper для получения всех строк (эквивалент asyncpg.fetch)"""
+    async with conn.cursor() as cur:
+        await cur.execute(query, args)
+        rows = await cur.fetchall()
+        if rows:
+            # Преобразуем в list[dict]
+            return [dict(zip([desc[0] for desc in cur.description], row)) for row in rows]
+        return []
+
+
+async def execute(conn, query: str, *args):
+    """Helper для выполнения команды (эквивалент asyncpg.execute)"""
+    async with conn.cursor() as cur:
+        await cur.execute(query, args)
 
 
 async def save_to_supabase_rest(table: str, data: dict) -> bool:
@@ -328,7 +372,7 @@ async def save_file_to_storage(file_bytes: bytes, file_name: str) -> str:
 # ============================================================================
 
 
-async def handle_text(text: str, message_id: int, pool: Optional[asyncpg.Pool] = None):
+async def handle_text(text: str, message_id: int, pool: Optional[AsyncConnectionPool] = None):
     """
     Обработка текстового сообщения → observation (REST API версия)
     """
@@ -372,7 +416,7 @@ async def handle_text(text: str, message_id: int, pool: Optional[asyncpg.Pool] =
 
 
 async def handle_photo(
-    photo: List[TelegramPhotoSize], caption: Optional[str], message_id: int, pool: asyncpg.Pool
+    photo: List[TelegramPhotoSize], caption: Optional[str], message_id: int, pool: AsyncConnectionPool
 ):
     """
     Обработка фото → спрашиваем что это
@@ -388,9 +432,10 @@ async def handle_photo(
     # Сохраняем в storage
     public_url = await save_file_to_storage(file_bytes, "photo.jpg")
 
-    async with pool.acquire() as conn:
+    async with pool.connection() as conn:
         # Создать VictorFile
-        file_id = await conn.fetchval(
+        file_id = await fetchval(
+            conn,
             """
             INSERT INTO victor_files (
                 original_file_name, file_type, file_size, file_url, file_path,
@@ -411,7 +456,8 @@ async def handle_photo(
         )
 
         # Создать inbox
-        inbox_id = await conn.fetchval(
+        inbox_id = await fetchval(
+            conn,
             """
             INSERT INTO victor_inbox (
                 content_type, file_id, processing_status,
@@ -435,7 +481,7 @@ async def handle_photo(
 
 
 async def handle_video(
-    video: TelegramVideo, caption: Optional[str], message_id: int, pool: asyncpg.Pool
+    video: TelegramVideo, caption: Optional[str], message_id: int, pool: AsyncConnectionPool
 ):
     """
     Обработка видео → спрашиваем описание
@@ -448,8 +494,9 @@ async def handle_video(
     # Сохранить
     public_url = await save_file_to_storage(file_bytes, "video.mp4")
 
-    async with pool.acquire() as conn:
-        file_id = await conn.fetchval(
+    async with pool.connection() as conn:
+        file_id = await fetchval(
+            conn,
             """
             INSERT INTO victor_files (
                 original_file_name, file_type, file_size, file_url, file_path,
@@ -469,7 +516,8 @@ async def handle_video(
             {"width": video.width, "height": video.height, "duration": video.duration},
         )
 
-        inbox_id = await conn.fetchval(
+        inbox_id = await fetchval(
+            conn,
             """
             INSERT INTO victor_inbox (
                 content_type, file_id, processing_status,
@@ -490,7 +538,7 @@ async def handle_video(
 
 
 async def handle_audio(
-    audio: TelegramAudio, caption: Optional[str], message_id: int, pool: asyncpg.Pool
+    audio: TelegramAudio, caption: Optional[str], message_id: int, pool: AsyncConnectionPool
 ):
     """
     Обработка аудио → автоматически в очередь транскрипции
@@ -500,8 +548,9 @@ async def handle_audio(
     file_path, file_bytes = await download_telegram_file(audio.file_id)
     public_url = await save_file_to_storage(file_bytes, audio.file_name or "audio.mp3")
 
-    async with pool.acquire() as conn:
-        file_id = await conn.fetchval(
+    async with pool.connection() as conn:
+        file_id = await fetchval(
+            conn,
             """
             INSERT INTO victor_files (
                 original_file_name, file_type, file_size, file_url, file_path,
@@ -523,7 +572,8 @@ async def handle_audio(
         )
 
         # Добавить в очередь обработки
-        await conn.execute(
+        await execute(
+            conn,
             """
             INSERT INTO victor_processing_queue (
                 file_id, processing_type, priority, status
@@ -535,7 +585,8 @@ async def handle_audio(
             "pending",
         )
 
-        await conn.execute(
+        await execute(
+            conn,
             """
             INSERT INTO victor_inbox (
                 content_type, file_id, processing_status, telegram_message_id
@@ -552,7 +603,7 @@ async def handle_audio(
 
 
 async def handle_voice(
-    voice: TelegramVoice, caption: Optional[str], message_id: int, pool: asyncpg.Pool
+    voice: TelegramVoice, caption: Optional[str], message_id: int, pool: AsyncConnectionPool
 ):
     """
     Обработка голосового → автоматически в очередь
@@ -562,8 +613,9 @@ async def handle_voice(
     file_path, file_bytes = await download_telegram_file(voice.file_id)
     public_url = await save_file_to_storage(file_bytes, "voice.ogg")
 
-    async with pool.acquire() as conn:
-        file_id = await conn.fetchval(
+    async with pool.connection() as conn:
+        file_id = await fetchval(
+            conn,
             """
             INSERT INTO victor_files (
                 original_file_name, file_type, file_size, file_url, file_path,
@@ -583,7 +635,8 @@ async def handle_voice(
             {"duration": voice.duration},
         )
 
-        await conn.execute(
+        await execute(
+            conn,
             """
             INSERT INTO victor_processing_queue (
                 file_id, processing_type, priority, status
@@ -595,7 +648,8 @@ async def handle_voice(
             "pending",
         )
 
-        await conn.execute(
+        await execute(
+            conn,
             """
             INSERT INTO victor_inbox (
                 content_type, file_id, processing_status, telegram_message_id
@@ -612,7 +666,7 @@ async def handle_voice(
 
 
 async def handle_document(
-    doc: TelegramDocument, caption: Optional[str], message_id: int, pool: asyncpg.Pool
+    doc: TelegramDocument, caption: Optional[str], message_id: int, pool: AsyncConnectionPool
 ):
     """
     Обработка документа → спрашиваем что это
@@ -622,8 +676,9 @@ async def handle_document(
     file_path, file_bytes = await download_telegram_file(doc.file_id)
     public_url = await save_file_to_storage(file_bytes, doc.file_name)
 
-    async with pool.acquire() as conn:
-        file_id = await conn.fetchval(
+    async with pool.connection() as conn:
+        file_id = await fetchval(
+            conn,
             """
             INSERT INTO victor_files (
                 original_file_name, file_type, file_size, file_url, file_path,
@@ -641,7 +696,8 @@ async def handle_document(
             caption or "",
         )
 
-        inbox_id = await conn.fetchval(
+        inbox_id = await fetchval(
+            conn,
             """
             INSERT INTO victor_inbox (
                 content_type, file_id, processing_status, telegram_message_id
@@ -670,16 +726,17 @@ async def handle_document(
     logger.info(f"✅ Document saved: {inbox_id}")
 
 
-async def handle_contact(contact: TelegramContact, message_id: int, pool: asyncpg.Pool):
+async def handle_contact(contact: TelegramContact, message_id: int, pool: AsyncConnectionPool):
     """
     Обработка контакта → спрашиваем сохранить
     """
     logger.info(f"👤 Processing contact: {contact.first_name} {contact.phone_number}")
 
-    async with pool.acquire() as conn:
+    async with pool.connection() as conn:
         # TODO: Проверить есть ли в БД контактов
         # Пока просто создаём inbox
-        inbox_id = await conn.fetchval(
+        inbox_id = await fetchval(
+            conn,
             """
             INSERT INTO victor_inbox (
                 content_type, content, processing_status, telegram_message_id
@@ -701,14 +758,15 @@ async def handle_contact(contact: TelegramContact, message_id: int, pool: asyncp
     logger.info(f"✅ Contact saved: {inbox_id}")
 
 
-async def handle_location(location: TelegramLocation, message_id: int, pool: asyncpg.Pool):
+async def handle_location(location: TelegramLocation, message_id: int, pool: AsyncConnectionPool):
     """
     Обработка геолокации → автоматически в observation
     """
     logger.info(f"📍 Processing location: {location.latitude}, {location.longitude}")
 
-    async with pool.acquire() as conn:
-        observation_id = await conn.fetchval(
+    async with pool.connection() as conn:
+        observation_id = await fetchval(
+            conn,
             """
             INSERT INTO victor_observations (
                 type, content, location, timestamp, source
@@ -722,7 +780,8 @@ async def handle_location(location: TelegramLocation, message_id: int, pool: asy
             "telegram",
         )
 
-        await conn.execute(
+        await execute(
+            conn,
             """
             INSERT INTO victor_inbox (
                 content_type, processing_status, telegram_message_id,
@@ -824,9 +883,10 @@ async def clarify_inbox(inbox_id: UUID, request: ClarifyRequest):
     pool = await get_db_pool()
 
     try:
-        async with pool.acquire() as conn:
+        async with pool.connection() as conn:
             # Получить inbox
-            inbox = await conn.fetchrow(
+            inbox = await fetchrow(
+                conn,
                 """
                 SELECT * FROM victor_inbox WHERE id = $1
             """,
@@ -838,7 +898,8 @@ async def clarify_inbox(inbox_id: UUID, request: ClarifyRequest):
 
             # Обновить категорию файла
             if inbox["content_type"] == "file" and inbox["file_id"]:
-                await conn.execute(
+                await execute(
+                    conn,
                     """
                     UPDATE victor_files
                     SET category = $1,
@@ -851,7 +912,8 @@ async def clarify_inbox(inbox_id: UUID, request: ClarifyRequest):
                 )
 
                 # Добавить в очередь обработки
-                await conn.execute(
+                await execute(
+                    conn,
                     """
                     INSERT INTO victor_processing_queue (
                         file_id, processing_type, priority, status
@@ -864,7 +926,7 @@ async def clarify_inbox(inbox_id: UUID, request: ClarifyRequest):
                 )
 
             # Обновить inbox
-            await conn.execute(
+            await execute(
                 """
                 UPDATE victor_inbox
                 SET processing_status = $1,
@@ -897,7 +959,7 @@ async def list_inbox(
     pool = await get_db_pool()
 
     try:
-        async with pool.acquire() as conn:
+        async with pool.connection() as conn:
             query = """
                 SELECT 
                     i.*,
@@ -920,7 +982,7 @@ async def list_inbox(
             params.append(limit)
             query += f" ORDER BY i.created_at DESC LIMIT ${len(params)}"
 
-            rows = await conn.fetch(query, *params)
+            rows = await fetch(conn, query, *params)
 
             items = [dict(row) for row in rows]
 
