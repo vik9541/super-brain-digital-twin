@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: victor-bot
-        image: registry.digitalocean.com/YOUR_REGISTRY/victor-bot:2.0.0
+        image: registry.digitalocean.com/digital-twin-registry/victor-bot:2.0.0
         imagePullPolicy: Always
         ports:
         - name: http

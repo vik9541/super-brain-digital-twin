@@ -1,0 +1,68 @@
+name: Build and Deploy Victor Bot v2.0
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'main_victor_bot.py'
+      - 'api/victor_bot_router.py'
+      - 'workers/**'
+      - 'Dockerfile.victor-bot'
+      - 'requirements.api.txt'
+      - 'k8s/victor-bot/**'
+      - '.github/workflows/victor-bot.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: registry.digitalocean.com/digital-twin-registry
+  IMAGE_NAME: victor-bot
+  VERSION: 2.0.0
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Login to DigitalOcean Container Registry
+        run: doctl registry login --expiry-seconds 1200
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            -f Dockerfile.victor-bot \
+            .
+
+      - name: Push to Registry
+        run: |
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
+      - name: Save DigitalOcean kubeconfig
+        run: doctl kubernetes cluster kubeconfig save ${{ secrets.K8S_CLUSTER_NAME }}
+
+      - name: Update deployment image
+        run: |
+          kubectl set image deployment/victor-bot-v2 \
+            victor-bot=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+            --record
+
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/victor-bot-v2 --timeout=300s
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -l app=victor-bot-v2
+          kubectl get svc victor-bot-service
+          kubectl get ingress victor-bot-ingress
