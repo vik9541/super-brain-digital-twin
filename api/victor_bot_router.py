@@ -733,16 +733,18 @@ async def telegram_webhook(update: TelegramUpdate, background_tasks: BackgroundT
 
     message = update.message
     logger.info(f"📥 Received update: {update.update_id}, message_id: {message.message_id}")
-    
+
     # Получить DB pool (TEMPORARY: skip DB if connection fails)
     try:
         pool = await get_db_pool()
         logger.info("✅ DB pool obtained successfully")
     except Exception as e:
         logger.error(f"❌ DB pool failed: {e}")
-        logger.info(f"📝 Message received (DB unavailable): {message.text or message.caption or 'media'}")
+        logger.info(
+            f"📝 Message received (DB unavailable): {message.text or message.caption or 'media'}"
+        )
         return {"ok": True, "message": "Received (DB offline)"}
-    
+
     try:
         # 1️⃣ ОПРЕДЕЛЯЕМ ТИП И ОБРАБАТЫВАЕМ
         if message.text:
