@@ -6,12 +6,12 @@ Works directly with Perplexity AI (no N8N required)
 import asyncio
 import base64
 import datetime
-import json
 import logging
 import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+
 load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
 import httpx
@@ -44,10 +44,11 @@ conversation_contexts = {}
 
 supabase = None
 try:
-    from supabase import create_client, Client
+    from supabase import create_client
+
     SUPABASE_URL = os.getenv("SUPABASE_URL", "")
     SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
-    
+
     if SUPABASE_URL and SUPABASE_KEY:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
         logger.info(f"вњ… Supabase: ENABLED")
@@ -59,6 +60,7 @@ except Exception as e:
 # PERPLEXITY AI - DIRECT INTEGRATION
 # ============================================
 
+
 async def ask_perplexity(message: str, context: list = None) -> str:
     """
     Send message directly to Perplexity AI API.
@@ -66,7 +68,7 @@ async def ask_perplexity(message: str, context: list = None) -> str:
     """
     if not PERPLEXITY_API_KEY:
         return "вќЊ Perplexity API key not configured"
-    
+
     messages = [
         {
             "role": "system",
@@ -75,35 +77,35 @@ async def ask_perplexity(message: str, context: list = None) -> str:
             - РџРѕРјРѕРіР°С‚СЊ СЃ РїР»Р°РЅРёСЂРѕРІР°РЅРёРµРј Рё Р·Р°РґР°С‡Р°РјРё
             - РђРЅР°Р»РёР·РёСЂРѕРІР°С‚СЊ РёРЅС„РѕСЂРјР°С†РёСЋ
             - Р”Р°РІР°С‚СЊ РїРѕР»РµР·РЅС‹Рµ СЃРѕРІРµС‚С‹
-            РћС‚РІРµС‡Р°Р№ РЅР° СЂСѓСЃСЃРєРѕРј СЏР·С‹РєРµ."""
+            РћС‚РІРµС‡Р°Р№ РЅР° СЂСѓСЃСЃРєРѕРј СЏР·С‹РєРµ.""",
         }
     ]
-    
+
     # Add conversation context (last 5 messages)
     if context:
         messages.extend(context[-5:])
-    
+
     messages.append({"role": "user", "content": message})
-    
+
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             response = await client.post(
                 "https://api.perplexity.ai/chat/completions",
                 headers={
                     "Authorization": f"Bearer {PERPLEXITY_API_KEY}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
                 json={
                     "model": PERPLEXITY_MODEL,
                     "messages": messages,
                     "temperature": 0.7,
-                    "max_tokens": 1024
-                }
+                    "max_tokens": 1024,
+                },
             )
             response.raise_for_status()
             data = response.json()
             return data["choices"][0]["message"]["content"]
-            
+
     except httpx.HTTPStatusError as e:
         logger.error(f"Perplexity API error: {e.response.status_code} - {e.response.text}")
         return f"вќЊ РћС€РёР±РєР° API: {e.response.status_code}"
@@ -116,12 +118,13 @@ async def ask_perplexity(message: str, context: list = None) -> str:
 # FILE HANDLING
 # ============================================
 
+
 async def download_file_as_base64(file_id: str) -> str | None:
     """Download file from Telegram"""
     try:
         file = await bot.get_file(file_id)
         file_url = f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file.file_path}"
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.get(file_url)
             response.raise_for_status()
@@ -135,14 +138,16 @@ async def save_to_supabase(user_id: int, message_text: str, response_text: str):
     """Save conversation to Supabase"""
     if not supabase:
         return
-    
+
     try:
-        supabase.table("interactions").insert({
-            "user_id": user_id,
-            "user_message": message_text,
-            "bot_response": response_text,
-            "created_at": datetime.datetime.now().isoformat()
-        }).execute()
+        supabase.table("interactions").insert(
+            {
+                "user_id": user_id,
+                "user_message": message_text,
+                "bot_response": response_text,
+                "created_at": datetime.datetime.now().isoformat(),
+            }
+        ).execute()
     except Exception as e:
         logger.error(f"Supabase save error: {e}")
 
@@ -151,46 +156,49 @@ async def save_to_supabase(user_id: int, message_text: str, response_text: str):
 # MESSAGE HANDLER
 # ============================================
 
+
 async def handle_message(message: Message):
     """Universal message handler"""
     user_id = message.from_user.id
-    
+
     # Extract text
     if message.text:
         text = message.text
     elif message.caption:
         text = message.caption
     elif message.voice:
-        text = "[Р“РѕР»РѕСЃРѕРІРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ - С‚СЂРµР±СѓРµС‚СЃСЏ С‚СЂР°РЅСЃРєСЂРёРїС†РёСЏ]"
+        text = (
+            "[Р“РѕР»РѕСЃРѕРІРѕРµ СЃРѕРѕР±С‰РµРЅРёРµ - С‚СЂРµР±СѓРµС‚СЃСЏ С‚СЂР°РЅСЃРєСЂРёРїС†РёСЏ]"
+        )
     elif message.document:
         text = f"[Р”РѕРєСѓРјРµРЅС‚: {message.document.file_name}]"
     elif message.photo:
         text = message.caption if message.caption else "[Р¤РѕС‚Рѕ Р±РµР· РѕРїРёСЃР°РЅРёСЏ]"
     else:
         text = "[РќРµРёР·РІРµСЃС‚РЅС‹Р№ С‚РёРї СЃРѕРѕР±С‰РµРЅРёСЏ]"
-    
+
     # Get context
     if user_id not in conversation_contexts:
         conversation_contexts[user_id] = []
     context = conversation_contexts[user_id]
-    
+
     # Send typing indicator
     status_msg = await message.answer("рџ§  Р”СѓРјР°СЋ...")
-    
+
     # Get AI response
     response = await ask_perplexity(text, context)
-    
+
     # Update context
     conversation_contexts[user_id].append({"role": "user", "content": text})
     conversation_contexts[user_id].append({"role": "assistant", "content": response})
-    
+
     # Keep only last 10 messages
     if len(conversation_contexts[user_id]) > 10:
         conversation_contexts[user_id] = conversation_contexts[user_id][-10:]
-    
+
     # Send response
     await status_msg.edit_text(response)
-    
+
     # Save to Supabase
     await save_to_supabase(user_id, text, response)
 
@@ -199,11 +207,12 @@ async def handle_message(message: Message):
 # COMMANDS
 # ============================================
 
+
 @dp.message(Command("start"))
 async def cmd_start(message: Message):
     user_id = message.from_user.id
     conversation_contexts[user_id] = []  # Reset context
-    
+
     text = """
 рџ‘‹ РџСЂРёРІРµС‚! РЇ С‚РІРѕР№ Personal Assistant Bot.
 
@@ -253,14 +262,16 @@ Powered by Perplexity AI рџљЂ
 async def cmd_clear(message: Message):
     user_id = message.from_user.id
     conversation_contexts[user_id] = []
-    await message.answer("рџ—‘пёЏ РљРѕРЅС‚РµРєСЃС‚ РѕС‡РёС‰РµРЅ! РќР°С‡РёРЅР°РµРј СЃ С‡РёСЃС‚РѕРіРѕ Р»РёСЃС‚Р°.")
+    await message.answer(
+        "рџ—‘пёЏ РљРѕРЅС‚РµРєСЃС‚ РѕС‡РёС‰РµРЅ! РќР°С‡РёРЅР°РµРј СЃ С‡РёСЃС‚РѕРіРѕ Р»РёСЃС‚Р°."
+    )
 
 
 @dp.message(Command("status"))
 async def cmd_status(message: Message):
     perplexity_status = "вњ… OK" if PERPLEXITY_API_KEY else "вќЊ No API Key"
     supabase_status = "вњ… Connected" if supabase else "вљ пёЏ Disabled"
-    
+
     text = f"""
 рџ“Љ РЎС‚Р°С‚СѓСЃ СЃРёСЃС‚РµРјС‹
 
@@ -278,6 +289,7 @@ async def cmd_status(message: Message):
 # UNIVERSAL HANDLER
 # ============================================
 
+
 @dp.message(F.text | F.voice | F.document | F.photo)
 async def handle_any(message: Message):
     await handle_message(message)
@@ -287,11 +299,12 @@ async def handle_any(message: Message):
 # MAIN
 # ============================================
 
+
 async def main():
     logger.info("рџљЂ Starting Personal Assistant Bot...")
     logger.info(f"рџ§  Perplexity: {'Enabled' if PERPLEXITY_API_KEY else 'Disabled'}")
     logger.info(f"рџ’ѕ Supabase: {'Enabled' if supabase else 'Disabled'}")
-    
+
     try:
         await dp.start_polling(bot)
     finally:
@@ -300,4 +313,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
