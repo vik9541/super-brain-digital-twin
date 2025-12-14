@@ -10,10 +10,11 @@ Endpoints:
 import logging
 import os
 from contextlib import asynccontextmanager
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 
 import jwt
+
 # Redis for caching
 import redis.asyncio as redis
 from fastapi import (
@@ -115,10 +116,10 @@ app = FastAPI(
 def verify_websocket_token(token: str) -> Optional[dict]:
     """
     Verify JWT token for WebSocket authentication.
-    
+
     Args:
         token: JWT token string
-        
+
     Returns:
         Decoded payload if valid, None if invalid/expired
     """
@@ -143,11 +144,11 @@ def verify_websocket_token(token: str) -> Optional[dict]:
 async def websocket_endpoint(websocket: WebSocket, token: str):
     """
     Secure WebSocket endpoint with JWT authentication.
-    
+
     Authentication:
         Token is passed in URL: /ws/{jwt_token}
         Token is verified BEFORE accepting connection
-    
+
     Events:
         - batch_started
         - batch_completed
@@ -155,47 +156,51 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
         - analysis_done
         - error
         - metric_update
-    
+
     Example:
         ws://localhost:8000/ws/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
     """
     # SECURITY: Verify token BEFORE accepting connection
     user_data = verify_websocket_token(token)
-    
+
     # Accept connection first (WebSocket protocol requirement)
     await websocket.accept()
-    
+
     # Then immediately close if token is invalid
     if not user_data:
         logger.warning(f"WebSocket connection rejected: invalid token")
         await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid token")
         return
-    
+
     user_id = user_data.get("user_id", "unknown")
     logger.info(f"WebSocket connection accepted for user: {user_id}")
-    
+
     try:
         # Send welcome message
-        await websocket.send_json({
-            "type": "connected",
-            "timestamp": datetime.utcnow().isoformat(),
-            "user_id": user_id,
-            "message": "WebSocket connection established"
-        })
-        
+        await websocket.send_json(
+            {
+                "type": "connected",
+                "timestamp": datetime.utcnow().isoformat(),
+                "user_id": user_id,
+                "message": "WebSocket connection established",
+            }
+        )
+
         # Main event loop
         while True:
             data = await websocket.receive_text()
             logger.info(f"Received from {user_id}: {data}")
-            
+
             # Echo response (replace with actual logic)
-            await websocket.send_json({
-                "type": "echo",
-                "timestamp": datetime.utcnow().isoformat(),
-                "data": data,
-                "user_id": user_id
-            })
-            
+            await websocket.send_json(
+                {
+                    "type": "echo",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "data": data,
+                    "user_id": user_id,
+                }
+            )
+
     except WebSocketDisconnect:
         logger.info(f"Client {user_id} disconnected")
     except Exception as e:
@@ -217,5 +222,5 @@ async def health_check():
     return {
         "status": "ok",
         "timestamp": datetime.utcnow().isoformat(),
-        "service": "Super Brain API"
+        "service": "Super Brain API",
     }

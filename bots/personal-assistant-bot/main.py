@@ -13,8 +13,8 @@ import sys
 from pathlib import Path
 
 # Configure UTF-8 encoding for stdout
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout.reconfigure(encoding='utf-8')
+if sys.stdout.encoding != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
 
 from dotenv import load_dotenv
 
@@ -270,7 +270,7 @@ async def cmd_clear(message: Message):
     conversation_contexts[user_id] = []
     await message.answer(
         "рџ—'пёЏ РљРѕРЅС‚РµРєСЃС‚ РѕС‡РёС‰РµРЅ! РќР°С‡РёРЅР°РµРј СЃ С‡РёСЃС‚РѕРіРѕ Р»РёСЃС‚Р°.",
-        parse_mode="HTML"
+        parse_mode="HTML",
     )
 
 

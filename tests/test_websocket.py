@@ -9,19 +9,15 @@ Tests:
 5. WebSocket disconnect handling
 """
 
-import asyncio
-import os
+# Import app and config from main
+import sys
 from datetime import datetime, timedelta
-from typing import Optional
+from pathlib import Path
 
 import jwt
 import pytest
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
-
-# Import app and config from main
-import sys
-from pathlib import Path
 
 # Add api directory to path
 api_dir = Path(__file__).parent.parent / "api"
@@ -29,8 +25,7 @@ sys.path.insert(0, str(api_dir))
 
 # Import after adding to path (Pylance may show errors but pytest will work)
 import main  # type: ignore
-from main import app, SECRET_KEY, ALGORITHM  # type: ignore
-
+from main import ALGORITHM, SECRET_KEY, app  # type: ignore
 
 # ============================================
 # FIXTURES
@@ -91,11 +86,11 @@ def test_websocket_valid_token(client, valid_token):
         assert data["type"] == "connected"
         assert data["user_id"] == "test_user_123"
         assert "message" in data
-        
+
         # Send test message
         test_message = "Hello WebSocket!"
         websocket.send_text(test_message)
-        
+
         # Should receive echo
         response = websocket.receive_json()
         assert response["type"] == "echo"
@@ -108,7 +103,7 @@ def test_websocket_invalid_token(client, invalid_token):
     with pytest.raises((Exception, WebSocketDisconnect)) as exc_info:
         with client.websocket_connect(f"/ws/{invalid_token}"):
             pass
-    
+
     # Should be rejected (check exception type, not message)
     assert exc_info.type in (Exception, WebSocketDisconnect)
 
@@ -118,7 +113,7 @@ def test_websocket_expired_token(client, expired_token):
     with pytest.raises((Exception, WebSocketDisconnect)) as exc_info:
         with client.websocket_connect(f"/ws/{expired_token}"):
             pass
-    
+
     # Should be rejected (check exception type, not message)
     assert exc_info.type in (Exception, WebSocketDisconnect)
 
@@ -128,7 +123,7 @@ def test_websocket_missing_token(client):
     with pytest.raises((Exception, WebSocketDisconnect)) as exc_info:
         with client.websocket_connect("/ws/"):
             pass
-    
+
     # Should fail (no token provided)
     assert exc_info.type in (Exception, WebSocketDisconnect)
 
@@ -136,11 +131,11 @@ def test_websocket_missing_token(client):
 def test_websocket_malformed_token(client):
     """Test WebSocket connection with malformed token - should reject."""
     malformed_token = "not-a-valid-jwt-token"
-    
+
     with pytest.raises((Exception, WebSocketDisconnect)) as exc_info:
         with client.websocket_connect(f"/ws/{malformed_token}"):
             pass
-    
+
     # Should be rejected (check exception type, not message)
     assert exc_info.type in (Exception, WebSocketDisconnect)
 
@@ -151,7 +146,7 @@ def test_websocket_multiple_messages(client, valid_token):
         # Receive welcome
         welcome = websocket.receive_json()
         assert welcome["type"] == "connected"
-        
+
         # Send multiple messages
         messages = ["Message 1", "Message 2", "Message 3"]
         for msg in messages:
@@ -172,7 +167,7 @@ def test_verify_websocket_token_function():
     result = main.verify_websocket_token(valid_token)
     assert result is not None
     assert result["user_id"] == "test_123"
-    
+
     # Expired token
     expired_payload = {
         "user_id": "test_456",
@@ -181,7 +176,7 @@ def test_verify_websocket_token_function():
     expired_token = jwt.encode(expired_payload, SECRET_KEY, algorithm=ALGORITHM)
     result = main.verify_websocket_token(expired_token)
     assert result is None
-    
+
     # Invalid token
     invalid_token = "invalid.jwt.token"
     result = main.verify_websocket_token(invalid_token)
@@ -207,7 +202,7 @@ def test_websocket_performance(client, valid_token):
     with client.websocket_connect(f"/ws/{valid_token}") as websocket:
         # Receive welcome
         websocket.receive_json()
-        
+
         # Send 100 messages rapidly
         for i in range(100):
             websocket.send_text(f"Message {i}")
