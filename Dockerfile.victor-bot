@@ -31,10 +31,12 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY --chown=victorbot:victorbot api/ ./api/
 COPY --chown=victorbot:victorbot workers/ ./workers/
 COPY --chown=victorbot:victorbot database/ ./database/
-COPY --chown=victorbot:victorbot main_victor_bot.py .COPY --chown=victorbot:victorbot .env.victor .env
+COPY --chown=victorbot:victorbot main_victor_bot.py .
+COPY --chown=victorbot:victorbot .env.victor .env
 
 # Create __init__.py files for Python modules
 RUN touch ./api/__init__.py ./workers/__init__.py
+
 # Switch to non-root user
 USER victorbot
 
