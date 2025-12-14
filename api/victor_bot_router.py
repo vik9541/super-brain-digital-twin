@@ -8,6 +8,7 @@ import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
+import uuid
 
 import asyncpg
 import httpx
@@ -27,6 +28,7 @@ VICTOR_CHAT_ID = int(os.getenv("VICTOR_CHAT_ID", "0"))
 DATABASE_URL = os.getenv("DATABASE_URL")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_KEY")  # Используем тот же ключ для REST API
 AWS_S3_BUCKET = os.getenv("AWS_S3_BUCKET", "victor-files")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -163,6 +165,30 @@ async def get_db_pool():
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
+
+async def save_to_supabase_rest(table: str, data: dict) -> bool:
+    """
+    Сохранить данные в Supabase через REST API (обходной путь для pooler)
+    """
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/{table}"
+        headers = {
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": f"Bearer {SUPABASE_ANON_KEY}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(url, json=data, headers=headers, timeout=10.0)
+            response.raise_for_status()
+            logger.info(f"✅ REST API: Saved to {table}: {data.get('id', 'unknown')}")
+            return True
+            
+    except Exception as e:
+        logger.error(f"❌ REST API save failed for {table}: {e}")
+        return False
 
 
 async def send_to_telegram(
@@ -302,49 +328,47 @@ async def save_file_to_storage(file_bytes: bytes, file_name: str) -> str:
 # ============================================================================
 
 
-async def handle_text(text: str, message_id: int, pool: asyncpg.Pool):
+async def handle_text(text: str, message_id: int, pool: Optional[asyncpg.Pool] = None):
     """
-    Обработка текстового сообщения → observation
+    Обработка текстового сообщения → observation (REST API версия)
     """
     logger.info(f"📝 Processing text: {text[:50]}...")
 
     # Классифицировать тип
     obs_type = classify_text(text)
-
-    async with pool.acquire() as conn:
-        # Создать observation
-        observation_id = await conn.fetchval(
-            """
-            INSERT INTO victor_observations (
-                type, content, timestamp, source
-            ) VALUES ($1, $2, $3, $4)
-            RETURNING id
-        """,
-            obs_type,
-            text,
-            datetime.now(),
-            "telegram",
-        )
-
+    
+    observation_id = str(uuid.uuid4())
+    
+    # Создать observation через REST API
+    observation_data = {
+        "id": observation_id,
+        "type": obs_type,
+        "content": text,
+        "timestamp": datetime.now().isoformat(),
+        "source": "telegram"
+    }
+    
+    success = await save_to_supabase_rest("victor_observations", observation_data)
+    
+    if success:
         # Создать inbox запись
-        await conn.execute(
-            """
-            INSERT INTO victor_inbox (
-                content_type, content, processing_status,
-                telegram_message_id, linked_observation_id,
-                is_processed
-            ) VALUES ($1, $2, $3, $4, $5, $6)
-        """,
-            "text",
-            text,
-            "done",
-            message_id,
-            observation_id,
-            True,
-        )
+        inbox_data = {
+            "id": str(uuid.uuid4()),
+            "content_type": "text",
+            "content": text,
+            "processing_status": "done",
+            "telegram_message_id": message_id,
+            "linked_observation_id": observation_id,
+            "is_processed": True
+        }
+        
+        await save_to_supabase_rest("victor_inbox", inbox_data)
+        await send_to_telegram(f"✅ Записано как <b>{obs_type}</b>")
+        logger.info(f"✅ Text saved as observation: {obs_type}")
+    else:
+        logger.error(f"❌ Failed to save observation")
+        await send_to_telegram(f"⚠️ Ошибка сохранения, но текст получен: {text[:50]}")
 
-    await send_to_telegram(f"✅ Записано как <b>{obs_type}</b>")
-    logger.info(f"✅ Text saved as observation: {obs_type}")
 
 
 async def handle_photo(
@@ -734,16 +758,14 @@ async def telegram_webhook(update: TelegramUpdate, background_tasks: BackgroundT
     message = update.message
     logger.info(f"📥 Received update: {update.update_id}, message_id: {message.message_id}")
 
-    # Получить DB pool (TEMPORARY: skip DB if connection fails)
+    # Получить DB pool (не критично - используем REST API fallback)
+    pool = None
     try:
         pool = await get_db_pool()
         logger.info("✅ DB pool obtained successfully")
     except Exception as e:
         logger.error(f"❌ DB pool failed: {e}")
-        logger.info(
-            f"📝 Message received (DB unavailable): {message.text or message.caption or 'media'}"
-        )
-        return {"ok": True, "message": "Received (DB offline)"}
+        logger.info(f"📝 Using REST API fallback mode")
 
     try:
         # 1️⃣ ОПРЕДЕЛЯЕМ ТИП И ОБРАБАТЫВАЕМ
@@ -780,8 +802,9 @@ async def telegram_webhook(update: TelegramUpdate, background_tasks: BackgroundT
 
     except Exception as e:
         logger.error(f"❌ Error processing message: {e}", exc_info=True)
-        await send_to_telegram(f"❌ Ошибка обработки сообщения: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # НЕ отправляем ошибку Виктору, чтобы не спамить
+        # await send_to_telegram(f"❌ Ошибка обработки сообщения: {str(e)}")
+        return {"ok": True, "error": str(e)}  # Возвращаем 200 OK чтобы Telegram не ретраил
 
 
 @router.post("/inbox/{inbox_id}/clarify")
