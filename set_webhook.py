@@ -16,10 +16,7 @@ print(f"Webhook URL: {WEBHOOK_URL}")
 print()
 
 # Установить вебхук
-response = requests.post(
-    f"{BOT_API}/setWebhook",
-    json={"url": WEBHOOK_URL}
-)
+response = requests.post(f"{BOT_API}/setWebhook", json={"url": WEBHOOK_URL})
 
 data = response.json()
 
@@ -27,11 +24,11 @@ if data["ok"]:
     print("✅ WEBHOOK УСТАНОВЛЕН!")
     print()
     print("Проверка...")
-    
+
     # Проверить
     check_response = requests.get(f"{BOT_API}/getWebhookInfo")
     check_data = check_response.json()
-    
+
     if check_data["ok"]:
         info = check_data["result"]
         print(f"   📡 URL: {info.get('url')}")
@@ -40,7 +37,7 @@ if data["ok"]:
         print("🎉 Готово! Теперь бот будет получать сообщения.")
         print()
         print("Тестируйте: отправьте /start в @astra_VIK_bot")
-    
+
 else:
     print(f"❌ ОШИБКА: {data}")
 

@@ -20,11 +20,11 @@ if data["ok"]:
     print(f"📡 URL: {info.get('url', 'NOT SET')}")
     print(f"📊 Pending Updates: {info.get('pending_update_count', 0)}")
     print(f"❌ Last Error: {info.get('last_error_message', 'None')}")
-    
-    if info.get('last_error_message'):
+
+    if info.get("last_error_message"):
         print()
         print("🔴 ПРОБЛЕМА С ВЕБХУКОМ!")
-        if "500" in info['last_error_message']:
+        if "500" in info["last_error_message"]:
             print("   → Ожидается после деплоя `6452507` (REST API fallback fix)")
             print("   → GitHub Actions должен задеплоить исправление")
         print()
