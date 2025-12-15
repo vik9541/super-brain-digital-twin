@@ -24,14 +24,14 @@ if data["ok"]:
     print(f"❌ Last Error: {info.get('last_error_message', 'None')}")
     print(f"🔢 Max Connections: {info.get('max_connections', 40)}")
     print()
-    
-    if not info.get('url'):
+
+    if not info.get("url"):
         print("⚠️  WEBHOOK NOT SET!")
         print()
         print("Нужно установить:")
         print(f"  {BOT_API}/setWebhook?url=https://victor.97v.ru/api/telegram/webhook")
         print()
-    elif "victor.97v.ru" not in info.get('url', ''):
+    elif "victor.97v.ru" not in info.get("url", ""):
         print(f"⚠️  WRONG URL: {info['url']}")
         print()
         print("Должен быть: https://victor.97v.ru/api/telegram/webhook")
@@ -39,8 +39,8 @@ if data["ok"]:
     else:
         print("✅ Webhook URL correct!")
         print()
-        
-        if info.get('last_error_message'):
+
+        if info.get("last_error_message"):
             print("⚠️  Есть ошибки при доставке:")
             print(f"   {info['last_error_message']}")
             print()
