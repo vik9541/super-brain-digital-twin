@@ -1,0 +1,4 @@
+# Deploy trigger for REST API fallback fix
+# Commit: 6452507 - Add REST API fallback for all handlers when pool fails
+# Reason: Webhook returns 405 "Method Not Allowed" - need to deploy REST API fallback code
+# Date: 2025-12-15 09:15
