@@ -1,6 +1,8 @@
 """
 VICTOR BOT v2.0 - Main Application
 Универсальный сенсор для сбора всех данных от Виктора
+
+Deployment: 2025-12-15 09:17 - REST API fallback fix (commit 6452507)
 """
 
 import logging
