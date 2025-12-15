@@ -234,31 +234,24 @@ async def save_to_supabase_rest(table: str, data: dict) -> bool:
         return False
 
 
-async def send_to_telegram(
-    message: str, 
-    chat_id: Optional[int] = None,
-    reply_markup: Optional[Dict[str, Any]] = None, 
-    parse_mode: str = "HTML"
-):
+async def send_to_telegram(text: str, to_user_id: int, reply_markup: Optional[Dict[str, Any]] = None):
     """
     Отправить сообщение в Telegram
     
     Args:
-        message: Текст сообщения
-        chat_id: ID чата (если None, использует VICTOR_CHAT_ID из env)
-        reply_markup: Клавиатура для ответа
-        parse_mode: Режим парсинга (HTML/Markdown)
+        text: Текст сообщения
+        to_user_id: ID чата получателя
+        reply_markup: Клавиатура для ответа (опционально)
     """
+    chat_id = to_user_id
+    
     if not TELEGRAM_BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN not configured")
         return
 
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-    
-    # Используем переданный chat_id или fallback на VICTOR_CHAT_ID
-    target_chat_id = chat_id if chat_id is not None else VICTOR_CHAT_ID
 
-    payload = {"chat_id": target_chat_id, "text": message, "parse_mode": parse_mode}
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
 
     if reply_markup:
         payload["reply_markup"] = reply_markup
@@ -267,7 +260,7 @@ async def send_to_telegram(
         try:
             response = await client.post(url, json=payload, timeout=10.0)
             response.raise_for_status()
-            logger.info(f"✅ Sent to Telegram: {message[:50]}...")
+            logger.info(f"✅ Sent to Telegram: {text[:50]}...")
             return response.json()
         except Exception as e:
             logger.error(f"❌ Failed to send to Telegram: {e}")
@@ -276,6 +269,7 @@ async def send_to_telegram(
 
 async def ask_victor(
     question: str,
+    chat_id: int,
     options: Optional[List[str]] = None,
     inbox_id: Optional[UUID] = None,
     needs_text: bool = False,
@@ -293,7 +287,7 @@ async def ask_victor(
             ]
         }
 
-    await send_to_telegram(message=question, reply_markup=markup)
+    await send_to_telegram(question, chat_id, markup)
 
 
 def classify_text(text: str) -> str:
@@ -418,11 +412,11 @@ async def handle_text(text: str, message_id: int, pool: Optional[AsyncConnection
         }
 
         await save_to_supabase_rest("victor_inbox", inbox_data)
-        await send_to_telegram(f"✅ Записано как <b>{obs_type}</b>", chat_id=sender_chat_id)
+        await send_to_telegram(f"✅ Записано как <b>{obs_type}</b>", sender_chat_id)
         logger.info(f"✅ Text saved as observation: {obs_type}")
     else:
         logger.error(f"❌ Failed to save observation")
-        await send_to_telegram(f"⚠️ Ошибка сохранения, но текст получен: {text[:50]}", chat_id=sender_chat_id)
+        await send_to_telegram(f"⚠️ Ошибка сохранения, но текст получен: {text[:50]}", sender_chat_id)
 
 
 async def handle_photo(
@@ -488,14 +482,14 @@ async def handle_photo(
 
     # Спросить Виктора
     await ask_victor(
-        "📸 Что на фото?", options=["чек", "документ", "лицо", "план", "другое"], inbox_id=inbox_id
+        "📸 Что на фото?", chat_id=sender_chat_id, options=["чек", "документ", "лицо", "план", "другое"], inbox_id=inbox_id
     )
 
     logger.info(f"✅ Photo saved, awaiting clarification: {inbox_id}")
 
 
 async def handle_video(
-    video: TelegramVideo, caption: Optional[str], message_id: int, pool: AsyncConnectionPool
+    video: TelegramVideo, caption: Optional[str], message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None
 ):
     """
     Обработка видео → спрашиваем описание
@@ -546,7 +540,7 @@ async def handle_video(
             "Что в видео? (описи)",
         )
 
-    await ask_victor("🎬 Что в видео? Опиши:", inbox_id=inbox_id, needs_text=True)
+    await ask_victor("🎬 Что в видео? Опиши:", chat_id=sender_chat_id, inbox_id=inbox_id, needs_text=True)
 
     logger.info(f"✅ Video saved: {inbox_id}")
 
@@ -612,7 +606,7 @@ async def handle_audio(
             message_id,
         )
 
-    await send_to_telegram("🎙️ Аудио сохранено. Будет транскрибировано.", chat_id=sender_chat_id)
+    await send_to_telegram("🎙️ Аудио сохранено. Будет транскрибировано.", sender_chat_id)
     logger.info(f"✅ Audio queued for transcription")
 
 
@@ -675,7 +669,7 @@ async def handle_voice(
             message_id,
         )
 
-    await send_to_telegram("🎤 Голос записан. Очередь транскрипции.", chat_id=sender_chat_id)
+    await send_to_telegram("🎤 Голос записан. Очередь транскрипции.", sender_chat_id)
     logger.info(f"✅ Voice queued")
 
 
@@ -734,7 +728,7 @@ async def handle_document(
         suggestions = ["документ", "письмо", "отчёт", "другое"]
 
     await ask_victor(
-        f"📄 Документ: <b>{doc.file_name}</b>\nЧто это?", options=suggestions, inbox_id=inbox_id
+        f"📄 Документ: <b>{doc.file_name}</b>\nЧто это?", chat_id=sender_chat_id, options=suggestions, inbox_id=inbox_id
     )
 
     logger.info(f"✅ Document saved: {inbox_id}")
@@ -765,6 +759,7 @@ async def handle_contact(contact: TelegramContact, message_id: int, pool: AsyncC
 
     await ask_victor(
         f"👤 Новый контакт:\n<b>{contact.first_name} {contact.last_name or ''}</b>\n📞 {contact.phone_number}\n\nСохранить?",
+        chat_id=sender_chat_id,
         options=["да", "нет"],
         inbox_id=inbox_id,
     )
@@ -809,7 +804,7 @@ async def handle_location(location: TelegramLocation, message_id: int, pool: Asy
             True,
         )
 
-    await send_to_telegram("📍 Локация сохранена", chat_id=sender_chat_id)
+    await send_to_telegram("📍 Локация сохранена", sender_chat_id)
     logger.info(f"✅ Location saved")
 
 
@@ -864,15 +859,15 @@ async def telegram_webhook(update: TelegramUpdate, background_tasks: BackgroundT
             await handle_document(message.document, message.caption, message.message_id, pool, sender_chat_id)
 
         elif message.contact:
-            await handle_contact(message.contact, message.message_id, pool)
+            await handle_contact(message.contact, message.message_id, pool, sender_chat_id)
 
         elif message.location:
-            await handle_location(message.location, message.message_id, pool)
+            await handle_location(message.location, message.message_id, pool, sender_chat_id)
 
         else:
             # Неизвестный тип
             logger.warning(f"⚠️ Unknown message type: {message}")
-            await ask_victor("❓ Что это? Опиши:", None, None, needs_text=True)
+            await ask_victor("❓ Что это? Опиши:", chat_id=sender_chat_id, inbox_id=None, needs_text=True)
 
         return {"ok": True, "status": "processed"}
 
@@ -955,7 +950,7 @@ async def clarify_inbox(inbox_id: UUID, request: ClarifyRequest):
                 inbox_id,
             )
 
-        await send_to_telegram(f"✅ Сохранено как '<b>{request.answer}</b>' в систему")
+        await send_to_telegram(f"✅ Сохранено как '<b>{request.answer}</b>' в систему", VICTOR_CHAT_ID)
 
         return {"status": "saved", "message": f"✅ Сохранено как '{request.answer}' в систему"}
 
