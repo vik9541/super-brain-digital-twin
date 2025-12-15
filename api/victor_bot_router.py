@@ -612,7 +612,7 @@ async def handle_audio(
 
 async def handle_voice(
     voice: TelegramVoice, caption: Optional[str], message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None
-)::
+):
     """
     Обработка голосового → автоматически в очередь
     """
