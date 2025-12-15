@@ -4,7 +4,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: victor-bot-v2
-  namespace: default
+  namespace: production
   labels:
     app: victor-bot-v2
     version: "2.0.0"
@@ -109,6 +109,12 @@ spec:
             secretKeyRef:
               name: victor-bot-secrets
               key: openai-api-key
+        
+        # Redis for file storage (TZ-001)
+        - name: REDIS_URL
+          value: "redis://redis.production.svc.cluster.local:6379"
+        - name: REDIS_PASSWORD
+          value: "superbrain_redis_2025"
         
         resources:
           requests:
