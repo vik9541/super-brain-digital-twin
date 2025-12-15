@@ -1051,13 +1051,13 @@ async def telegram_webhook(update: TelegramUpdate, background_tasks: BackgroundT
         # 1️⃣ ОПРЕДЕЛЯЕМ ТИП И ОБРАБАТЫВАЕМ
         if message.text:
             # ТЗ-001: Обработка команд
-            if message.text == \"/add\":
+            if message.text == "/add":
                 await handle_add_command(sender_chat_id)
-            elif message.text == \"/files\":
+            elif message.text == "/files":
                 await handle_files_command(sender_chat_id)
-            elif message.text == \"/analyze\":
+            elif message.text == "/analyze":
                 await handle_analyze_command(sender_chat_id, pool)
-            elif message.text == \"/clear\":
+            elif message.text == "/clear":
                 await handle_clear_command(sender_chat_id)
             else:
                 # Обычный текст
