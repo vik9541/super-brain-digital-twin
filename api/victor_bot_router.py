@@ -412,25 +412,25 @@ async def handle_files_command(sender_chat_id: int):
     Команда /files - Показать список файлов в сессии
     """
     files = await file_processor.get_user_files(sender_chat_id)
-    
+
     if not files:
         message = "📂 <b>Сессия пуста</b>\n\nИспользуйте /add чтобы добавить файлы"
     else:
         total_size = sum(f.get("file_size", 0) for f in files)
         message = f"📁 <b>Файлы в сессии</b> ({len(files)})\n\n"
-        
+
         for i, file_data in enumerate(files, 1):
             file_name = file_data.get("file_name", "unknown")
             file_type = file_data.get("file_type", "file")
             file_size_mb = file_data.get("file_size", 0) / 1024 / 1024
-            
+
             icon = "📝" if file_type == "document" else "🖼️" if file_type == "photo" else "🎥"
-            
+
             message += f"{i}. {icon} <code>{file_name}</code> ({file_size_mb:.2f} MB)\n"
-        
+
         message += f"\n📊 Всего: {total_size / 1024 / 1024:.2f} MB\n\n"
         message += "Используйте /analyze для обработки"
-    
+
     await send_to_telegram(message, sender_chat_id)
 
 
@@ -439,41 +439,38 @@ async def handle_analyze_command(sender_chat_id: int, pool: Optional[AsyncConnec
     Команда /analyze - Обработать все файлы через AI
     """
     files = await file_processor.get_user_files(sender_chat_id)
-    
+
     if not files:
         await send_to_telegram("⚠️ Нет файлов для анализа. Используйте /add", sender_chat_id)
         return
-    
+
     # Отправить уведомление о начале анализа
-    await send_to_telegram(
-        f"🔍 <b>Начинаю анализ...</b>\n\nФайлов: {len(files)}",
-        sender_chat_id
-    )
-    
+    await send_to_telegram(f"🔍 <b>Начинаю анализ...</b>\n\nФайлов: {len(files)}", sender_chat_id)
+
     # Обработать каждый файл
     results = []
-    
+
     for file_data in files:
         local_path = Path(file_data.get("local_path", ""))
         file_type = file_data.get("file_type")
-        
+
         if file_type == "photo":
             result = await file_processor.process_image(local_path)
         elif file_type == "document":
             result = await file_processor.process_document(local_path)
         else:
             result = {"type": "unknown", "status": "skipped"}
-        
+
         results.append(result)
-    
+
     # Сохранить в базу данных
     if pool:
         await file_processor.save_analysis_to_db(sender_chat_id, files, results, pool)
-    
+
     # Отправить результаты
     formatted_results = file_processor.format_analysis_results(files, results)
     await send_to_telegram(formatted_results, sender_chat_id)
-    
+
     # Очистить сессию после анализа
     await file_processor.clear_user_files(sender_chat_id)
 
@@ -483,7 +480,7 @@ async def handle_clear_command(sender_chat_id: int):
     Команда /clear - Очистить сессию
     """
     success = await file_processor.clear_user_files(sender_chat_id)
-    
+
     if success:
         await send_to_telegram("🗑️ <b>Сессия очищена</b>\n\nВсе файлы удалены", sender_chat_id)
     else:
@@ -561,15 +558,15 @@ async def handle_photo(
 
     # Скачиваем файл
     file_path, file_bytes = await download_telegram_file(largest_photo.file_id)
-    
+
     # ТЗ-001: Сохранить локально в /tmp/uploads/{user_id}/
     upload_dir = Path(f"/tmp/uploads/{sender_chat_id}")
     upload_dir.mkdir(parents=True, exist_ok=True)
-    
+
     local_file_path = upload_dir / f"photo_{message_id}.jpg"
     with open(local_file_path, "wb") as f:
         f.write(file_bytes)
-    
+
     # Сохранить метаданные в Redis
     await file_processor.store_file_metadata(
         user_id=sender_chat_id,
@@ -577,14 +574,14 @@ async def handle_photo(
         file_name=f"photo_{message_id}.jpg",
         file_type="photo",
         file_size=largest_photo.file_size or 0,
-        local_path=str(local_file_path)
+        local_path=str(local_file_path),
     )
-    
+
     await send_to_telegram(
         f"✅ Фото добавлено в сессию\\n\\nИспользуйте:\\n/files - посмотреть список\\n/analyze - начать анализ",
-        sender_chat_id
+        sender_chat_id,
     )
-    
+
     logger.info(f"✅ Photo stored in Redis session")
 
     # Сохраняем в storage
@@ -853,15 +850,15 @@ async def handle_document(
     logger.info(f"📄 Processing document: {doc.file_name}")
 
     file_path, file_bytes = await download_telegram_file(doc.file_id)
-    
+
     # ТЗ-001: Сохранить локально
     upload_dir = Path(f"/tmp/uploads/{sender_chat_id}")
     upload_dir.mkdir(parents=True, exist_ok=True)
-    
+
     local_file_path = upload_dir / doc.file_name
     with open(local_file_path, "wb") as f:
         f.write(file_bytes)
-    
+
     # Сохранить метаданные в Redis
     await file_processor.store_file_metadata(
         user_id=sender_chat_id,
@@ -869,14 +866,14 @@ async def handle_document(
         file_name=doc.file_name,
         file_type="document",
         file_size=doc.file_size or 0,
-        local_path=str(local_file_path)
+        local_path=str(local_file_path),
     )
-    
+
     await send_to_telegram(
         f"✅ Документ <code>{doc.file_name}</code> добавлен\\n\\nИспользуйте:\\n/files - посмотреть список\\n/analyze - начать анализ",
-        sender_chat_id
+        sender_chat_id,
     )
-    
+
     logger.info(f"✅ Document stored in Redis session")
     public_url = await save_file_to_storage(file_bytes, doc.file_name)
 
