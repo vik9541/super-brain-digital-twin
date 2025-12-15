@@ -235,18 +235,30 @@ async def save_to_supabase_rest(table: str, data: dict) -> bool:
 
 
 async def send_to_telegram(
-    message: str, reply_markup: Optional[Dict[str, Any]] = None, parse_mode: str = "HTML"
+    message: str, 
+    chat_id: Optional[int] = None,
+    reply_markup: Optional[Dict[str, Any]] = None, 
+    parse_mode: str = "HTML"
 ):
     """
     Отправить сообщение в Telegram
+    
+    Args:
+        message: Текст сообщения
+        chat_id: ID чата (если None, использует VICTOR_CHAT_ID из env)
+        reply_markup: Клавиатура для ответа
+        parse_mode: Режим парсинга (HTML/Markdown)
     """
     if not TELEGRAM_BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN not configured")
         return
 
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    
+    # Используем переданный chat_id или fallback на VICTOR_CHAT_ID
+    target_chat_id = chat_id if chat_id is not None else VICTOR_CHAT_ID
 
-    payload = {"chat_id": VICTOR_CHAT_ID, "text": message, "parse_mode": parse_mode}
+    payload = {"chat_id": target_chat_id, "text": message, "parse_mode": parse_mode}
 
     if reply_markup:
         payload["reply_markup"] = reply_markup
@@ -371,7 +383,7 @@ async def save_file_to_storage(file_bytes: bytes, file_name: str) -> str:
 # ============================================================================
 
 
-async def handle_text(text: str, message_id: int, pool: Optional[AsyncConnectionPool] = None):
+async def handle_text(text: str, message_id: int, pool: Optional[AsyncConnectionPool] = None, sender_chat_id: Optional[int] = None):
     """
     Обработка текстового сообщения → observation (REST API версия)
     """
@@ -406,11 +418,11 @@ async def handle_text(text: str, message_id: int, pool: Optional[AsyncConnection
         }
 
         await save_to_supabase_rest("victor_inbox", inbox_data)
-        await send_to_telegram(f"✅ Записано как <b>{obs_type}</b>")
+        await send_to_telegram(f"✅ Записано как <b>{obs_type}</b>", chat_id=sender_chat_id)
         logger.info(f"✅ Text saved as observation: {obs_type}")
     else:
         logger.error(f"❌ Failed to save observation")
-        await send_to_telegram(f"⚠️ Ошибка сохранения, но текст получен: {text[:50]}")
+        await send_to_telegram(f"⚠️ Ошибка сохранения, но текст получен: {text[:50]}", chat_id=sender_chat_id)
 
 
 async def handle_photo(
@@ -418,6 +430,7 @@ async def handle_photo(
     caption: Optional[str],
     message_id: int,
     pool: AsyncConnectionPool,
+    sender_chat_id: Optional[int] = None,
 ):
     """
     Обработка фото → спрашиваем что это
@@ -539,7 +552,7 @@ async def handle_video(
 
 
 async def handle_audio(
-    audio: TelegramAudio, caption: Optional[str], message_id: int, pool: AsyncConnectionPool
+    audio: TelegramAudio, caption: Optional[str], message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None
 ):
     """
     Обработка аудио → автоматически в очередь транскрипции
@@ -599,13 +612,13 @@ async def handle_audio(
             message_id,
         )
 
-    await send_to_telegram("🎙️ Аудио сохранено. Будет транскрибировано.")
+    await send_to_telegram("🎙️ Аудио сохранено. Будет транскрибировано.", chat_id=sender_chat_id)
     logger.info(f"✅ Audio queued for transcription")
 
 
 async def handle_voice(
-    voice: TelegramVoice, caption: Optional[str], message_id: int, pool: AsyncConnectionPool
-):
+    voice: TelegramVoice, caption: Optional[str], message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None
+)::
     """
     Обработка голосового → автоматически в очередь
     """
@@ -662,12 +675,12 @@ async def handle_voice(
             message_id,
         )
 
-    await send_to_telegram("🎤 Голос записан. Очередь транскрипции.")
+    await send_to_telegram("🎤 Голос записан. Очередь транскрипции.", chat_id=sender_chat_id)
     logger.info(f"✅ Voice queued")
 
 
 async def handle_document(
-    doc: TelegramDocument, caption: Optional[str], message_id: int, pool: AsyncConnectionPool
+    doc: TelegramDocument, caption: Optional[str], message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None
 ):
     """
     Обработка документа → спрашиваем что это
@@ -727,7 +740,7 @@ async def handle_document(
     logger.info(f"✅ Document saved: {inbox_id}")
 
 
-async def handle_contact(contact: TelegramContact, message_id: int, pool: AsyncConnectionPool):
+async def handle_contact(contact: TelegramContact, message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None):
     """
     Обработка контакта → спрашиваем сохранить
     """
@@ -759,7 +772,7 @@ async def handle_contact(contact: TelegramContact, message_id: int, pool: AsyncC
     logger.info(f"✅ Contact saved: {inbox_id}")
 
 
-async def handle_location(location: TelegramLocation, message_id: int, pool: AsyncConnectionPool):
+async def handle_location(location: TelegramLocation, message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None):
     """
     Обработка геолокации → автоматически в observation
     """
@@ -796,7 +809,7 @@ async def handle_location(location: TelegramLocation, message_id: int, pool: Asy
             True,
         )
 
-    await send_to_telegram("📍 Локация сохранена")
+    await send_to_telegram("📍 Локация сохранена", chat_id=sender_chat_id)
     logger.info(f"✅ Location saved")
 
 
@@ -827,25 +840,28 @@ async def telegram_webhook(update: TelegramUpdate, background_tasks: BackgroundT
         logger.error(f"❌ DB pool failed: {e}")
         logger.info(f"📝 Using REST API fallback mode")
 
+    # Получить chat_id отправителя для ответов
+    sender_chat_id = message.from_.id
+    
     try:
         # 1️⃣ ОПРЕДЕЛЯЕМ ТИП И ОБРАБАТЫВАЕМ
         if message.text:
-            await handle_text(message.text, message.message_id, pool)
+            await handle_text(message.text, message.message_id, pool, sender_chat_id)
 
         elif message.photo:
-            await handle_photo(message.photo, message.caption, message.message_id, pool)
+            await handle_photo(message.photo, message.caption, message.message_id, pool, sender_chat_id)
 
         elif message.video:
-            await handle_video(message.video, message.caption, message.message_id, pool)
+            await handle_video(message.video, message.caption, message.message_id, pool, sender_chat_id)
 
         elif message.audio:
-            await handle_audio(message.audio, message.caption, message.message_id, pool)
+            await handle_audio(message.audio, message.caption, message.message_id, pool, sender_chat_id)
 
         elif message.voice:
-            await handle_voice(message.voice, message.caption, message.message_id, pool)
+            await handle_voice(message.voice, message.caption, message.message_id, pool, sender_chat_id)
 
         elif message.document:
-            await handle_document(message.document, message.caption, message.message_id, pool)
+            await handle_document(message.document, message.caption, message.message_id, pool, sender_chat_id)
 
         elif message.contact:
             await handle_contact(message.contact, message.message_id, pool)
