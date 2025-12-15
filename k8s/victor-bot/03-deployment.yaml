@@ -109,6 +109,11 @@ spec:
             secretKeyRef:
               name: victor-bot-secrets
               key: openai-api-key
+        - name: PERPLEXITY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: victor-bot-secrets
+              key: perplexity-api-key
         
         # Redis for file storage (TZ-001)
         - name: REDIS_URL
