@@ -234,17 +234,19 @@ async def save_to_supabase_rest(table: str, data: dict) -> bool:
         return False
 
 
-async def send_to_telegram(text: str, to_user_id: int, reply_markup: Optional[Dict[str, Any]] = None):
+async def send_to_telegram(
+    text: str, to_user_id: int, reply_markup: Optional[Dict[str, Any]] = None
+):
     """
     Отправить сообщение в Telegram
-    
+
     Args:
         text: Текст сообщения
         to_user_id: ID чата получателя
         reply_markup: Клавиатура для ответа (опционально)
     """
     chat_id = to_user_id
-    
+
     if not TELEGRAM_BOT_TOKEN:
         logger.error("TELEGRAM_BOT_TOKEN not configured")
         return
@@ -377,7 +379,12 @@ async def save_file_to_storage(file_bytes: bytes, file_name: str) -> str:
 # ============================================================================
 
 
-async def handle_text(text: str, message_id: int, pool: Optional[AsyncConnectionPool] = None, sender_chat_id: Optional[int] = None):
+async def handle_text(
+    text: str,
+    message_id: int,
+    pool: Optional[AsyncConnectionPool] = None,
+    sender_chat_id: Optional[int] = None,
+):
     """
     Обработка текстового сообщения → observation (REST API версия)
     """
@@ -416,7 +423,9 @@ async def handle_text(text: str, message_id: int, pool: Optional[AsyncConnection
         logger.info(f"✅ Text saved as observation: {obs_type}")
     else:
         logger.error(f"❌ Failed to save observation")
-        await send_to_telegram(f"⚠️ Ошибка сохранения, но текст получен: {text[:50]}", sender_chat_id)
+        await send_to_telegram(
+            f"⚠️ Ошибка сохранения, но текст получен: {text[:50]}", sender_chat_id
+        )
 
 
 async def handle_photo(
@@ -482,14 +491,21 @@ async def handle_photo(
 
     # Спросить Виктора
     await ask_victor(
-        "📸 Что на фото?", chat_id=sender_chat_id, options=["чек", "документ", "лицо", "план", "другое"], inbox_id=inbox_id
+        "📸 Что на фото?",
+        chat_id=sender_chat_id,
+        options=["чек", "документ", "лицо", "план", "другое"],
+        inbox_id=inbox_id,
     )
 
     logger.info(f"✅ Photo saved, awaiting clarification: {inbox_id}")
 
 
 async def handle_video(
-    video: TelegramVideo, caption: Optional[str], message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None
+    video: TelegramVideo,
+    caption: Optional[str],
+    message_id: int,
+    pool: AsyncConnectionPool,
+    sender_chat_id: Optional[int] = None,
 ):
     """
     Обработка видео → спрашиваем описание
@@ -540,13 +556,19 @@ async def handle_video(
             "Что в видео? (описи)",
         )
 
-    await ask_victor("🎬 Что в видео? Опиши:", chat_id=sender_chat_id, inbox_id=inbox_id, needs_text=True)
+    await ask_victor(
+        "🎬 Что в видео? Опиши:", chat_id=sender_chat_id, inbox_id=inbox_id, needs_text=True
+    )
 
     logger.info(f"✅ Video saved: {inbox_id}")
 
 
 async def handle_audio(
-    audio: TelegramAudio, caption: Optional[str], message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None
+    audio: TelegramAudio,
+    caption: Optional[str],
+    message_id: int,
+    pool: AsyncConnectionPool,
+    sender_chat_id: Optional[int] = None,
 ):
     """
     Обработка аудио → автоматически в очередь транскрипции
@@ -611,7 +633,11 @@ async def handle_audio(
 
 
 async def handle_voice(
-    voice: TelegramVoice, caption: Optional[str], message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None
+    voice: TelegramVoice,
+    caption: Optional[str],
+    message_id: int,
+    pool: AsyncConnectionPool,
+    sender_chat_id: Optional[int] = None,
 ):
     """
     Обработка голосового → автоматически в очередь
@@ -674,7 +700,11 @@ async def handle_voice(
 
 
 async def handle_document(
-    doc: TelegramDocument, caption: Optional[str], message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None
+    doc: TelegramDocument,
+    caption: Optional[str],
+    message_id: int,
+    pool: AsyncConnectionPool,
+    sender_chat_id: Optional[int] = None,
 ):
     """
     Обработка документа → спрашиваем что это
@@ -728,13 +758,21 @@ async def handle_document(
         suggestions = ["документ", "письмо", "отчёт", "другое"]
 
     await ask_victor(
-        f"📄 Документ: <b>{doc.file_name}</b>\nЧто это?", chat_id=sender_chat_id, options=suggestions, inbox_id=inbox_id
+        f"📄 Документ: <b>{doc.file_name}</b>\nЧто это?",
+        chat_id=sender_chat_id,
+        options=suggestions,
+        inbox_id=inbox_id,
     )
 
     logger.info(f"✅ Document saved: {inbox_id}")
 
 
-async def handle_contact(contact: TelegramContact, message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None):
+async def handle_contact(
+    contact: TelegramContact,
+    message_id: int,
+    pool: AsyncConnectionPool,
+    sender_chat_id: Optional[int] = None,
+):
     """
     Обработка контакта → спрашиваем сохранить
     """
@@ -767,7 +805,12 @@ async def handle_contact(contact: TelegramContact, message_id: int, pool: AsyncC
     logger.info(f"✅ Contact saved: {inbox_id}")
 
 
-async def handle_location(location: TelegramLocation, message_id: int, pool: AsyncConnectionPool, sender_chat_id: Optional[int] = None):
+async def handle_location(
+    location: TelegramLocation,
+    message_id: int,
+    pool: AsyncConnectionPool,
+    sender_chat_id: Optional[int] = None,
+):
     """
     Обработка геолокации → автоматически в observation
     """
@@ -837,26 +880,36 @@ async def telegram_webhook(update: TelegramUpdate, background_tasks: BackgroundT
 
     # Получить chat_id отправителя для ответов
     sender_chat_id = message.from_.id
-    
+
     try:
         # 1️⃣ ОПРЕДЕЛЯЕМ ТИП И ОБРАБАТЫВАЕМ
         if message.text:
             await handle_text(message.text, message.message_id, pool, sender_chat_id)
 
         elif message.photo:
-            await handle_photo(message.photo, message.caption, message.message_id, pool, sender_chat_id)
+            await handle_photo(
+                message.photo, message.caption, message.message_id, pool, sender_chat_id
+            )
 
         elif message.video:
-            await handle_video(message.video, message.caption, message.message_id, pool, sender_chat_id)
+            await handle_video(
+                message.video, message.caption, message.message_id, pool, sender_chat_id
+            )
 
         elif message.audio:
-            await handle_audio(message.audio, message.caption, message.message_id, pool, sender_chat_id)
+            await handle_audio(
+                message.audio, message.caption, message.message_id, pool, sender_chat_id
+            )
 
         elif message.voice:
-            await handle_voice(message.voice, message.caption, message.message_id, pool, sender_chat_id)
+            await handle_voice(
+                message.voice, message.caption, message.message_id, pool, sender_chat_id
+            )
 
         elif message.document:
-            await handle_document(message.document, message.caption, message.message_id, pool, sender_chat_id)
+            await handle_document(
+                message.document, message.caption, message.message_id, pool, sender_chat_id
+            )
 
         elif message.contact:
             await handle_contact(message.contact, message.message_id, pool, sender_chat_id)
@@ -867,7 +920,9 @@ async def telegram_webhook(update: TelegramUpdate, background_tasks: BackgroundT
         else:
             # Неизвестный тип
             logger.warning(f"⚠️ Unknown message type: {message}")
-            await ask_victor("❓ Что это? Опиши:", chat_id=sender_chat_id, inbox_id=None, needs_text=True)
+            await ask_victor(
+                "❓ Что это? Опиши:", chat_id=sender_chat_id, inbox_id=None, needs_text=True
+            )
 
         return {"ok": True, "status": "processed"}
 
@@ -950,7 +1005,9 @@ async def clarify_inbox(inbox_id: UUID, request: ClarifyRequest):
                 inbox_id,
             )
 
-        await send_to_telegram(f"✅ Сохранено как '<b>{request.answer}</b>' в систему", VICTOR_CHAT_ID)
+        await send_to_telegram(
+            f"✅ Сохранено как '<b>{request.answer}</b>' в систему", VICTOR_CHAT_ID
+        )
 
         return {"status": "saved", "message": f"✅ Сохранено как '{request.answer}' в систему"}
 
